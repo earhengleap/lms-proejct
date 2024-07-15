@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "./logo";
 import { SidebarRoutes } from "./sidebar-routes";
 
@@ -15,7 +16,9 @@ const Sidebar = () => {
      "
     >
       <div className="p-6">
-        <Logo />
+        <Link href="/">
+  <Logo />        
+        </Link>
       </div>
 
       <div className="flex flex-col w-full">
