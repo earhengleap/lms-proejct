@@ -18,7 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   title: z.string().min(1, {
@@ -28,7 +28,7 @@ const formSchema = z.object({
 
 const CreatePage = () => {
   const router = useRouter();
-
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
