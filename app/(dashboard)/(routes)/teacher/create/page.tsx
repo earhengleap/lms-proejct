@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/app/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -28,7 +28,7 @@ const formSchema = z.object({
 
 const CreatePage = () => {
   const router = useRouter();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
