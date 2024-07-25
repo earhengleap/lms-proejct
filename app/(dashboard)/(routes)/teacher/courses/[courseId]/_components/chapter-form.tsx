@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Pencil, PlusCircle, Router } from "lucide-react";
+import { Loader2, Pencil, PlusCircle, Router } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -29,24 +29,24 @@ interface ChapterFormProps {
 }
 
 const formSchema = z.object({
-  title: z.string().min(1)
+  title: z.string().min(1),
 });
 
 const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
   const [isCreating, setIsCreating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  
+
   const toggleCreating = () => {
-    setIsCreating((current) => !current)
-  }
-  
+    setIsCreating((current) => !current);
+  };
+
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-    }
+    },
   });
 
   const { isSubmitting, isValid } = form.formState;
@@ -62,13 +62,13 @@ const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
     }
   };
 
-  const onRecorder = async (updateData: { id: string; position: number}[]) => {
+  const onRecorder = async (updateData: { id: string; position: number }[]) => {
     try {
       setIsUpdating(true);
 
       await axios.put(`/api/courses/${courseId}/chapters/recorder`, {
-        list: updateData
-      })
+        list: updateData,
+      });
       toast.success("Chapters recordered");
       router.refresh();
     } catch (error) {
@@ -76,10 +76,15 @@ const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
     } finally {
       setIsUpdating(false);
     }
-  }
+  };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+      {isUpdating && (
+        <div className="absolute h-full w-full bg-slate-500/20 top-0 right-0 rounded-m flex items-center justify-center">
+          <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
+        </div>
+      )}
       <div className="font-medium flex items-center justify-between">
         Course chapters
         <Button onClick={toggleCreating} variant={"ghost"}>
@@ -115,25 +120,27 @@ const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
                 </FormItem>
               )}
             />
-              <Button disabled={!isValid || isSubmitting} type="submit">
-                Create
-              </Button>
+            <Button disabled={!isValid || isSubmitting} type="submit">
+              Create
+            </Button>
           </form>
         </Form>
       )}
       {!isCreating && (
-        <div className={cn(
-          "text-sm mt-2",
-          !initialData.chapters.length && "text-slate-500 italic"
-        )}>
+        <div
+          className={cn(
+            "text-sm mt-2",
+            !initialData.chapters.length && "text-slate-500 italic"
+          )}
+        >
           {!initialData.chapters.length && "No chapters yet"}
-          <ChaptersList 
+          <ChaptersList
             onEdit={() => {}}
             onRecorder={onRecorder}
             items={initialData.chapters || []}
           />
         </div>
-      )} 
+      )}
       {!isCreating && (
         <p className="text-xs text-muted-foreground mt-4">
           Drag and drop to reorder the chapters
