@@ -1,3 +1,4 @@
+import Mux from "@mux/mux-node"
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -5,13 +6,21 @@ import { NextResponse } from "next/server";
 
 export async function PATCH (
     req: Request,
-    { params } : { params : {courseId: string, chapterId: string}}
+    {
+        params
+    } : {
+        params: {
+            courseId: string;
+            chapterId: string;
+        }
+    }
 ) {
     try {
         const { userId } = auth();
-        const { isPubished, ...values} = await req.json();
-
+        const { isPublished, ...values } = await req.json();
+        
         if (!userId) {
+            console.log("[USER_UNAUTHORIZED]");
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
@@ -20,10 +29,11 @@ export async function PATCH (
                 id: params.courseId,
                 userId
             }
-        });
+        })
 
         if (!ownCourse) {
-            return new NextResponse("Unauthorized", { status: 401 });
+            console.log("[USER_COURSE_UNAUTHORIZED]");
+            return new NextResponse("Unauthorized", { status: 401});
         }
 
         const chapter = await db.chapter.update({
@@ -34,11 +44,10 @@ export async function PATCH (
             data: {
                 ...values,
             }
-        });
-
-        //TODO: Handle Video Upload
+        })
 
         return NextResponse.json(chapter);
+
     } catch (error) {
         console.log("[COURSES_CHAPTER_ID]", error);
         return new NextResponse("Internal Error", { status: 500});
