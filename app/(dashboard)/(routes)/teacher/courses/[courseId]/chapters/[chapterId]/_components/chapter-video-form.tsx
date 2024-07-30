@@ -2,39 +2,42 @@
 
 import * as z from "zod";
 import axios from "axios";
+import MuxPlayer from "@mux/mux-player-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ImageIcon, Pencil, PlusCircle, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { FileUpload } from "@/components/file-upload";
 import { Chapter, MuxData } from "@prisma/client";
 
 interface ChapterVideoFormProps {
-  initialData: Chapter & { muxData?: MuxData | null};
+  initialData: Chapter & { muxData?: MuxData | null };
   courseId: string;
   chapterId: string;
 }
 
 const formSchema = z.object({
   videoUrl: z.string().min(1),
-})
+});
 
-const ChapterVideoForm = ({ 
-  initialData, 
+const ChapterVideoForm = ({
+  initialData,
   courseId,
   chapterId,
- }: ChapterVideoFormProps) => {
+}: ChapterVideoFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  
+
   const toggleEdit = () => setIsEditing((current) => !current);
-  
+
   const router = useRouter();
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await axios.patch(`/api/courses/${courseId}/chapters/${chapterId}`, values);
+      await axios.patch(
+        `/api/courses/${courseId}/chapters/${chapterId}`,
+        values
+      );
       toast.success("Course updated.");
       toggleEdit();
       router.refresh();
@@ -70,7 +73,7 @@ const ChapterVideoForm = ({
           </div>
         ) : (
           <div className="relative aspect-video mt-2">
-            Video uploaded!
+            <MuxPlayer playbackId={initialData?.muxData?.playbackId || ""} />
           </div>
         ))}
       {isEditing && (
@@ -90,7 +93,8 @@ const ChapterVideoForm = ({
       )}
       {initialData.videoUrl && !isEditing && (
         <div className="text-xs text-muted-forground mt-2">
-          Video can take a few minutes to process. Refresh the page if video does not appear.
+          Video can take a few minutes to process. Refresh the page if video
+          does not appear.
         </div>
       )}
     </div>
