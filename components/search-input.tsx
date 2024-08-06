@@ -21,7 +21,7 @@ const SearchInput = () => {
         const url = qs.stringifyUrl({
             url: pathname,
             query: {
-                categoryId: currentCategoryId, // Corrected the typo here
+                categoryId: currentCategoryId, 
                 title: debouncedValue
             }
         }, { skipNull: true, skipEmptyString: true });

@@ -14,7 +14,7 @@ const CourseLayout = async ({
 }) => {
   const { userId } = auth();
 
-  if (!userId) {
+  if (!userId ) {
     return redirect("/");
   }
 
