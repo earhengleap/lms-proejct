@@ -8,8 +8,9 @@ import { ConfettiProvider } from "@/components/providers/confetti-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "LMS",
-  description: "In processing...",
+  title: "Pheasa",
+  description:
+    "Pheasa is an online learning platform that helps you learn new languages and skills.",
 };
 
 export default function RootLayout({
