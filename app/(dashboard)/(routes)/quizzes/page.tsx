@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/quizzes/page.tsx
+
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
@@ -52,3 +54,5 @@ const QuizzDashboard = async () => {
 };
 
 export default QuizzDashboard;
+
+//old code

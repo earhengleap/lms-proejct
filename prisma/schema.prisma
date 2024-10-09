@@ -1,3 +1,5 @@
+//prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -165,15 +167,22 @@ model Answer {
 }
 
 model QuizSubmission {
-  id        Int      @id @default(autoincrement())
-  quizzId   Int
-  userId    String
-  score     Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  quiz      Quiz     @relation(fields: [quizzId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  id                  Int      @id @default(autoincrement())
+  quizzId             Int
+  userId              String
+  score               Int
+  attempt             Int      @default(1) // Track the number of attempts
+  hasRetake           Boolean  @default(false) // Track if the user can retake after passing
+  lastAttemptAt       DateTime @default(now()) // Track the time of the last attempt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now())
+  quiz                Quiz     @relation(fields: [quizzId], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  satisfactoryAttempt Int      @default(0)
+  isLocked            Boolean  @default(false)
+  hasUsedImprovementAttempt Boolean @default(false)
 
+  @@unique([quizzId, userId, attempt]) // Ensure unique combination of quiz, user, and attempt
   @@index([quizzId])
   @@index([userId])
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, X } from "lucide-react";
 import QuizzProgressBar from "./quizz-progress-bar";
@@ -13,7 +13,11 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 type QuestionWithAnswers = Question & { answers: Answer[] };
-type QuizWithQuestions = Quiz & { questions: QuestionWithAnswers[] };
+type QuizWithQuestions = Quiz & {
+  questions: QuestionWithAnswers[];
+  chapterId: string;
+  courseId: string;
+};
 
 type Props = {
   quizz: QuizWithQuestions;
@@ -22,7 +26,7 @@ type Props = {
 
 const QuizzQuestions = ({ quizz, userId }: Props) => {
   const router = useRouter();
-  const { questions } = quizz;
+  const { questions, chapterId, courseId } = quizz;
   const [started, setStarted] = useState<boolean>(false);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
   const [userAnswers, setUserAnswers] = useState<
@@ -112,6 +116,8 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
       <QuizzSubmission
         score={calculateScore()}
         totalQuestions={questions.length}
+        chapterId={chapterId}
+        courseId={courseId}
       />
     );
   }
@@ -211,5 +217,4 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
 
 export default QuizzQuestions;
 
-//Already done the percentage of the quizz submission
-
+//this is an old code

@@ -15,6 +15,10 @@ const Quizz = () => {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [submitted, setSubmitted] = useState<boolean>(false);
 
+  // Dummy values for chapterId and courseId, update these with actual values
+  const chapterId = "dummy-chapter-id";
+  const courseId = "dummy-course-id";
+
   const questions = [
     {
       questionText: "What is React?",
@@ -57,7 +61,7 @@ const Quizz = () => {
       ],
     },
     {
-      questionText: "What is Nextjs?",
+      questionText: "What is Next.js?",
       answers: [
         {
           answerText: "A framework for building user interfaces",
@@ -85,26 +89,29 @@ const Quizz = () => {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setSubmitted(true);
-      return;
     }
   };
 
   const handleAnswer = (answer: any) => {
     setSelectedAnswer(answer.id);
-
     const isCurrentCorrect = answer.isCorrect;
-
     if (isCurrentCorrect) {
       setScore(score + 1);
     }
-
     setIsCorrect(isCurrentCorrect);
   };
 
   const scorePercentage: number = Math.round((score / questions.length) * 100);
 
   if (submitted) {
-    return <QuizzSubmission score={score} totalQuestions={questions.length} />;
+    return (
+      <QuizzSubmission
+        score={scorePercentage}
+        totalQuestions={questions.length}
+        chapterId={chapterId} // Pass the chapterId here
+        courseId={courseId} // Pass the courseId here
+      />
+    );
   }
 
   return (

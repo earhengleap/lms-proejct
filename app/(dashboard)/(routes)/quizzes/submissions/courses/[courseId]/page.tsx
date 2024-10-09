@@ -1,16 +1,72 @@
-import React from "react";
+// CourseQuizzSubmissionsPage.tsx
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import ClientSideComponent from "./chapters/_components/client-quizz-submission";
+import { Prisma } from "@prisma/client";
 
 interface QuizSubmissionPageProps {
   params: {
     courseId: string;
   };
 }
+
+interface Course {
+  id: string;
+  title: string;
+}
+
+interface Chapter {
+  id: string;
+  title: string;
+  courseId: string;
+  description: string | null;
+  isPublished: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  videoUrl: string | null;
+  position: number;
+  isFree: boolean;
+}
+
+interface Quiz {
+  id: string;
+  name: string;
+  chapterId: string;
+  chapter: Chapter;
+}
+
+interface QuizSubmission {
+  id: number;
+  score: number;
+  createdAt: Date;
+  attempt: number;
+  quiz: Quiz;
+  userId: string;
+  quizId: string;
+}
+
+const MAX_RETRIES = 3;
+const INITIAL_BACKOFF = 1000; // 1 second
+
+const retryWithBackoff = async <T,>(
+  operation: () => Promise<T>,
+  retries: number = MAX_RETRIES,
+  backoff: number = INITIAL_BACKOFF
+): Promise<T> => {
+  try {
+    return await operation();
+  } catch (error) {
+    if (
+      retries > 0 &&
+      error instanceof Prisma.PrismaClientInitializationError
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+      return retryWithBackoff(operation, retries - 1, backoff * 2);
+    }
+    throw error;
+  }
+};
 
 const CourseQuizzSubmissionsPage = async ({
   params,
@@ -26,78 +82,59 @@ const CourseQuizzSubmissionsPage = async ({
     return <div>Course ID is missing</div>;
   }
 
-  const course = await db.course.findUnique({
-    where: {
-      id: courseId,
-    },
-  });
-
-  if (!course) {
-    return <div>Course not found</div>;
-  }
-
-  const quizSubmissions = await db.quizSubmission.findMany({
-    where: {
-      userId: userId,
-      quiz: {
-        courseId: courseId,
-      },
-    },
-    include: {
-      quiz: {
-        include: {
-          chapter: true,
+  try {
+    const course = await retryWithBackoff(() =>
+      db.course.findUnique({
+        where: {
+          id: courseId,
         },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      })
+    );
 
-  return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">
-        {course.title} - Quiz Submissions
-      </h1>
-      {quizSubmissions.length === 0 ? (
-        <p className="text-center text-gray-500">
-          No quiz submissions found for this course.
+    if (!course) {
+      return <div>Course not found</div>;
+    }
+
+    const quizSubmissions = await retryWithBackoff(() =>
+      db.quizSubmission.findMany({
+        where: {
+          userId: userId,
+          quiz: {
+            courseId: courseId,
+          },
+        },
+        include: {
+          quiz: {
+            include: {
+              chapter: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      })
+    );
+
+    return (
+      <ClientSideComponent
+        course={course}
+        quizSubmissions={quizSubmissions}
+        courseId={courseId}
+      />
+    );
+  } catch (error) {
+    console.error("Database error:", error);
+    return (
+      <div className="p-4 text-center">
+        <h1 className="text-2xl font-bold mb-4">Oops! Something went wrong</h1>
+        <p>
+          We&apos;re having trouble connecting to our database. Please try again
+          later.
         </p>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {quizSubmissions.map((submission) => (
-            <Link
-              href={`/courses/${courseId}/chapters/${submission.quiz.chapterId}/quizz/${submission.quiz.id}`}
-              key={submission.id}
-            >
-              <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    {submission.quiz.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-col gap-2">
-                    <Badge variant="secondary">
-                      Score: {submission.score}%
-                    </Badge>
-                    <p className="text-sm text-gray-600">
-                      Chapter: {submission.quiz.chapter.title}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Submitted on:{" "}
-                      {new Date(submission.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
 };
 
 export default CourseQuizzSubmissionsPage;

@@ -11,6 +11,7 @@ interface QuizSubmissionDetailPageProps {
   };
 }
 
+
 const QuizSubmissionDetailPage = async ({
   params,
 }: QuizSubmissionDetailPageProps) => {

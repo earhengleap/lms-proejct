@@ -3,8 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { IconBadge } from "@/components/icon-badge";
-import { ClipboardList } from "lucide-react"; // Assuming you have Lucide icons
+import { ClipboardList } from "lucide-react";
 
 interface QuizzCardProps {
   courseId: string;
@@ -25,8 +24,8 @@ const QuizzCard: React.FC<QuizzCardProps> = ({
 }) => {
   return (
     <Link href={`/quizzes/submissions/courses/${courseId}`}>
-      <Card className="group hover:shadow-sm transition overflow-hidden border rounded-lg p-3 h-full">
-        <div className="relative w-full aspect-video rounded-md overflow-hidden">
+      <Card className="overflow-hidden transition-shadow hover:shadow-md">
+        <div className="aspect-video relative">
           <Image
             src={courseImageUrl}
             alt={courseTitle}
@@ -34,23 +33,22 @@ const QuizzCard: React.FC<QuizzCardProps> = ({
             objectFit="cover"
           />
         </div>
-        <CardContent className="flex flex-col pt-2 p-0">
-          <div className="text-lg md:text-base font-medium group-hover:text-sky-700 transition line-clamp-2">
-            {courseTitle}
-          </div>
-          <p className="text-xs text-muted-foreground">{category}</p>
-          <div className="my-3 flex items-center gap-x-2 text-xs">
-            <div className="flex items-center gap-x-1 text-sky-800 bg-sky-500/10 pr-2 pl-1 rounded-md font-medium">
-              <IconBadge size="sm" icon={ClipboardList} />
-              <span>
-                {quizCount} {quizCount === 1 ? "Quiz" : "Quizzes"}
-              </span>
-            </div>
-          </div>
-          <div className="flex justify-between items-center">
+        <CardContent className="p-4">
+          <h3 className="text-lg font-semibold mb-2">{courseTitle}</h3>
+          <div className="flex items-center justify-between mb-2">
             <Badge variant="secondary" className="text-xs">
-              Submitted
+              {category}
             </Badge>
+            <span className="text-sm text-gray-500">
+              {quizCount} {quizCount === 1 ? "Quiz" : "Quizzes"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center">
+              <ClipboardList className="w-4 h-4 mr-1" />
+              <span>Avg. Score: {averageScore.toFixed(1)}%</span>
+            </div>
+            <span className="text-green-600">Submitted</span>
           </div>
         </CardContent>
       </Card>
@@ -59,3 +57,5 @@ const QuizzCard: React.FC<QuizzCardProps> = ({
 };
 
 export default QuizzCard;
+
+//old code
