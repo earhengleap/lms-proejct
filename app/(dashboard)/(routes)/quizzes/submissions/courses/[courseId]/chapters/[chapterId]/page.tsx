@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/quizzes/submissions/courses/[courseId]/chapters/[chapterId]/page.tsx
+
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";

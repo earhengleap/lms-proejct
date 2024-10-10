@@ -1,3 +1,5 @@
+// app/api/courses/[courseId]/route.ts
+
 import { db } from "@/lib/db";
 // import { isTeacher } from "@/lib/teacher";
 import { auth } from "@clerk/nextjs/server";
@@ -61,23 +63,34 @@ export async function DELETE (
 }
 
 
-export async function PATCH (
-req: Request,
-{
-    params
-} : {
-    params: {
-        courseId: string
-    }
-}
+export async function PATCH(
+    req: Request,
+    { params }: { params: { courseId: string } }
 ) {
     try {
         const { userId } = auth();
         const { courseId } = params;
         const values = await req.json();
 
-        if ( !userId) {
+        if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
+        }
+
+        let publisherId = undefined;
+
+        if (values.publisherName) {
+            // Find or create the publisher
+            let publisher = await db.publisher.findFirst({
+                where: { name: values.publisherName }
+            });
+
+            if (!publisher) {
+                publisher = await db.publisher.create({
+                    data: { name: values.publisherName }
+                });
+            }
+
+            publisherId = publisher.id;
         }
 
         const course = await db.course.update({
@@ -87,11 +100,16 @@ req: Request,
             },
             data: {
                 ...values,
+                publisherId: publisherId || undefined,
+            },
+            include: {
+                publisher: true
             }
-        })
+        });
+
         return NextResponse.json(course);
     } catch (error) {
         console.log("[COURSE_ID]", error);
-        return new NextResponse("Internal Error", { status: 500});
+        return new NextResponse("Internal Error", { status: 500 });
     }
 }

@@ -1,14 +1,15 @@
 import { db } from "@/lib/db";
-import { Category, Course } from "@prisma/client";
+import { Category, Course, Publisher } from "@prisma/client";
 import { getProgress } from "./get-progress";
 
-type CourseWithProgressWithCategory = Course & {
+type CourseWithProgressWithCategoryAndPublisher = Course & {
   category: Category | null;
   chapters: { id: string }[];
   progress: number | null;
+  publisher: Publisher | null;
 };
 
-type GetCoures = {
+type GetCourses = {
   userId: string | undefined;
   title: string;
   categoryId: string;
@@ -18,7 +19,7 @@ export const getCourses = async ({
   userId,
   title,
   categoryId,
-}: GetCoures): Promise<CourseWithProgressWithCategory[]> => {
+}: GetCourses): Promise<CourseWithProgressWithCategoryAndPublisher[]> => {
   try {
     const courses = await db.course.findMany({
       where: {
@@ -43,30 +44,32 @@ export const getCourses = async ({
             userId,
           },
         },
+        publisher: true, // Include the publisher information
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    const coursesWithProgress: CourseWithProgressWithCategory[] = userId
-      ? await Promise.all(
-          courses.map(async (course) => {
-            if (course.purchases.length === 0) {
+    const coursesWithProgress: CourseWithProgressWithCategoryAndPublisher[] =
+      userId
+        ? await Promise.all(
+            courses.map(async (course) => {
+              if (course.purchases.length === 0) {
+                return {
+                  ...course,
+                  progress: null,
+                };
+              }
+
+              const progressPercentage = await getProgress(userId, course.id);
               return {
                 ...course,
-                progress: null,
+                progress: progressPercentage,
               };
-            }
-
-            const progressPercentage = await getProgress(userId, course.id);
-            return {
-              ...course,
-              progress: progressPercentage,
-            };
-          })
-        )
-      : courses.map((course) => ({ ...course, progress: null })); //! Return courses with null progress if no userId
+            })
+          )
+        : courses.map((course) => ({ ...course, progress: null }));
 
     return coursesWithProgress;
   } catch (error) {

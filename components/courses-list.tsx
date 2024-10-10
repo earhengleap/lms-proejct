@@ -1,20 +1,21 @@
 "use client";
 
-import { Category, Course } from "@prisma/client";
+import { Category, Course, Publisher } from "@prisma/client";
 import CourseCard from "./course-card";
 import { motion } from "framer-motion";
 import { Search, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-type CourseWithProgressWithCategory = Course & {
+type CourseWithProgressWithCategoryAndPublisher = Course & {
   category: Category | null;
   chapters: { id: string }[];
   progress: number | null;
+  publisher: Publisher | null;
 };
 
 interface CoursesListProps {
-  items: CourseWithProgressWithCategory[];
+  items: CourseWithProgressWithCategoryAndPublisher[];
   userId?: string;
 }
 
@@ -32,6 +33,7 @@ const CoursesList = ({ items, userId }: CoursesListProps) => {
             price={item.price!}
             progress={item.progress}
             category={item.category?.name!}
+            publisherName={item.publisher?.name ?? "Unknown Publisher"}
             isFromDashboard={!!userId}
             firstChapterId={item.chapters[0]?.id || ""}
           />

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { IconBadge } from "./icon-badge";
-import { BookOpen } from "lucide-react";
+import { BookOpen, User } from "lucide-react";
 import { formatPrice } from "@/lib/format";
 import { CourseProgress } from "./course-progress";
 
@@ -13,8 +13,9 @@ interface CourseCardProps {
   price: number;
   progress: number | null;
   category: string;
+  publisherName: string; // New prop for publisher name
   isFromDashboard?: boolean;
-  firstChapterId: string; // New prop for the first chapter's ID
+  firstChapterId: string;
 }
 
 const CourseCard = ({
@@ -25,8 +26,9 @@ const CourseCard = ({
   price,
   progress,
   category,
+  publisherName, // Include this in the destructured props
   isFromDashboard = false,
-  firstChapterId, // Include this in the destructured props
+  firstChapterId,
 }: CourseCardProps) => {
   const courseUrl = isFromDashboard
     ? `/courses/${id}`
@@ -42,12 +44,16 @@ const CourseCard = ({
             {title}
           </div>
           <p className="text-xs text-muted-foreground">{category}</p>
-          <div className="my-3 flex items-center gap-x-2 text-xs bg">
-            <div className="flex items-center gap-x-1 text-sky-800 bg-sky-500/10 pr-2 pl-1 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent ">
+          <div className="my-3 flex items-center gap-x-2 text-xs">
+            <div className="flex items-center gap-x-1 text-sky-800 bg-sky-500/10 pr-2 pl-1 rounded-md font-medium">
               <IconBadge size="sm" icon={BookOpen} />
               <span>
                 {chaptersLength} {chaptersLength === 1 ? "Chapter" : "Chapters"}
               </span>
+            </div>
+            <div className="flex items-center gap-x-1 text-emerald-800 bg-emerald-500/10 pr-2 pl-1 rounded-md font-medium">
+              <IconBadge size="sm" icon={User} />
+              <span>{publisherName}</span>
             </div>
           </div>
           {progress !== null ? (

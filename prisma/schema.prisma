@@ -9,6 +9,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// New Publisher model
+model Publisher {
+  id        String   @id @default(uuid())
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courses   Course[] // One-to-many relationship with Course
+}
+
 model User {
   id          String           @id @default(uuid())
   userId      String           @unique
@@ -21,11 +30,14 @@ model User {
   submissions QuizSubmission[]
   comments    Comment[]
   likes       Like[]
+  courses     Course[]
+  chapters    Chapter[]
 }
 
 model Course {
   id          String       @id @default(uuid())
   userId      String
+  publisherId String
   title       String
   description String?
   imageUrl    String?
@@ -39,8 +51,12 @@ model Course {
   category    Category?    @relation(fields: [categoryId], references: [id])
   purchases   Purchase[]
   quizzes     Quiz[]
+  user        User         @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  publisher   Publisher    @relation(fields: [publisherId], references: [id], onDelete: Restrict) // Added onDelete: Restrict
 
   @@index([categoryId])
+  @@index([userId])
+  @@index([publisherId])
 }
 
 model Category {
@@ -70,15 +86,18 @@ model Chapter {
   isPublished  Boolean        @default(false)
   isFree       Boolean        @default(false)
   courseId     String
+  userId       String // New field to relate to User
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  muxData      MuxData?
-  userProgress UserProgress[]
-  quizzes      Quiz[]
-  comments     Comment[] // Added this line to establish the relation with Comment model
+  user         User           @relation(fields: [userId], references: [userId], onDelete: Cascade) // Many-to-one relationship with User (new)
+  muxData      MuxData? // One-to-one relationship with MuxData
+  userProgress UserProgress[] // One-to-many relationship with UserProgress
+  quizzes      Quiz[] // One-to-many relationship with Quiz
+  comments     Comment[] // One-to-many relationship with Comment
 
   @@index([courseId])
+  @@index([userId])
 }
 
 model MuxData {
@@ -167,20 +186,20 @@ model Answer {
 }
 
 model QuizSubmission {
-  id                  Int      @id @default(autoincrement())
-  quizzId             Int
-  userId              String
-  score               Int
-  attempt             Int      @default(1) // Track the number of attempts
-  hasRetake           Boolean  @default(false) // Track if the user can retake after passing
-  lastAttemptAt       DateTime @default(now()) // Track the time of the last attempt
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @default(now())
-  quiz                Quiz     @relation(fields: [quizzId], references: [id], onDelete: Cascade)
-  user                User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  satisfactoryAttempt Int      @default(0)
-  isLocked            Boolean  @default(false)
-  hasUsedImprovementAttempt Boolean @default(false)
+  id                        Int      @id @default(autoincrement())
+  quizzId                   Int
+  userId                    String
+  score                     Int
+  attempt                   Int      @default(1) // Track the number of attempts
+  hasRetake                 Boolean  @default(false) // Track if the user can retake after passing
+  lastAttemptAt             DateTime @default(now()) // Track the time of the last attempt
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now())
+  quiz                      Quiz     @relation(fields: [quizzId], references: [id], onDelete: Cascade)
+  user                      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  satisfactoryAttempt       Int      @default(0)
+  isLocked                  Boolean  @default(false)
+  hasUsedImprovementAttempt Boolean  @default(false)
 
   @@unique([quizzId, userId, attempt]) // Ensure unique combination of quiz, user, and attempt
   @@index([quizzId])
@@ -193,9 +212,6 @@ model Post {
   body     String
   comments Comment[]
 }
-
-// Updated Comment model
-// prisma/schema.prisma
 
 model Comment {
   id        String    @id @default(uuid())
