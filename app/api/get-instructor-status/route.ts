@@ -1,10 +1,10 @@
 // app/api/get-instructor-status/route.ts
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const { userId } = auth();
 
@@ -27,3 +27,5 @@ export async function GET() {
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 }
+
+export const dynamic = 'force-dynamic';

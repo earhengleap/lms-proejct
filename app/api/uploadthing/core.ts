@@ -1,4 +1,6 @@
-import { isAdministrator } from "@/lib/administrator";
+// app/api/uploadthing/core.ts
+
+import { canUpload } from "@/lib/administrator";
 import { auth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 
@@ -6,11 +8,9 @@ const f = createUploadthing();
 
 const handleAuth = () => {
     const { userId } = auth();
-    if (!userId) throw new Error("Unauthorized");
-    
-    const isAuthorized = isAdministrator(userId);
-    if (!isAuthorized) throw new Error("Unauthorized");
+    const isAuthorized = canUpload(userId);
 
+    if (!userId || !isAuthorized) throw new Error("Unauthorized");
     return { userId };
 }
 
