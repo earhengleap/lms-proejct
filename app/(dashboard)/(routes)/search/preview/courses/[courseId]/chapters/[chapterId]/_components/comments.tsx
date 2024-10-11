@@ -1,5 +1,3 @@
-// File: app/(dashboard)/(routes)/search/preview/courses/[courseId]chapters/[chapterId]/_components/comments.tsx
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -10,7 +8,15 @@ import { toast } from "sonner";
 import { CommentItem, Comment } from "./comment-item";
 import { Send } from "lucide-react";
 
-export const Comments = ({ chapterId }: { chapterId: string }) => {
+interface CommentsProps {
+  chapterId: string;
+  hasPurchased: boolean; // Check if the user has purchased
+}
+
+export const Comments: React.FC<CommentsProps> = ({
+  chapterId,
+  hasPurchased,
+}) => {
   const { user: currentUser, isLoaded: isUserLoaded } = useUser();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -86,7 +92,6 @@ export const Comments = ({ chapterId }: { chapterId: string }) => {
       if (event.data === "ping") return;
 
       const data = JSON.parse(event.data);
-      console.log("Received SSE event:", data);
       if (data.type === "newComment") {
         setComments((prevComments) =>
           addCommentToTree(prevComments, data.comment)
@@ -109,7 +114,7 @@ export const Comments = ({ chapterId }: { chapterId: string }) => {
     return () => {
       eventSource.close();
     };
-  }, [fetchComments, chapterId, addCommentToTree, updateCommentInTree]); //from commentTree
+  }, [fetchComments, chapterId, addCommentToTree, updateCommentInTree]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,57 +176,59 @@ export const Comments = ({ chapterId }: { chapterId: string }) => {
       toast.error("Failed to like comment. Please try again.");
       throw error;
     }
-  }; //only handleLikeComment
+  };
 
   return (
     <div className="flex flex-col">
-      {isUserLoaded && currentUser && (
-        <div className="mb-6 bg-white">
-          <form onSubmit={handleSubmit}>
-            <div className="relative">
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                disabled={isSubmittingMainComment}
-                className="pr-24 resize-none w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 rounded-md shadow-sm"
-                rows={3}
-              />
-              <Button
-                type="submit"
-                disabled={isSubmittingMainComment}
-                className="absolute bottom-3 right-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-4 text-sm font-medium transition duration-300 ease-in-out flex items-center"
-              >
-                {isSubmittingMainComment ? (
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : (
-                  <Send className="w-4 h-4 mr-2" />
-                )}
-                {isSubmittingMainComment ? "Posting..." : "Post"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      )}
+      {isUserLoaded &&
+        currentUser &&
+        hasPurchased && ( // Only show comment box if user has purchased
+          <div className="mb-6 bg-white">
+            <form onSubmit={handleSubmit}>
+              <div className="relative">
+                <Textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="Add a comment..."
+                  disabled={isSubmittingMainComment}
+                  className="pr-24 resize-none w-full border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 rounded-md shadow-sm"
+                  rows={3}
+                />
+                <Button
+                  type="submit"
+                  disabled={isSubmittingMainComment}
+                  className="absolute bottom-3 right-3 bg-blue-600 hover:bg-blue-700 text-white rounded-md py-2 px-4 text-sm font-medium transition duration-300 ease-in-out flex items-center"
+                >
+                  {isSubmittingMainComment ? (
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                  ) : (
+                    <Send className="w-4 h-4 mr-2" />
+                  )}
+                  {isSubmittingMainComment ? "Posting..." : "Post"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        )}
 
       <div>
         {isLoading ? (
@@ -247,6 +254,8 @@ export const Comments = ({ chapterId }: { chapterId: string }) => {
               ></path>
             </svg>
           </div>
+        ) : comments.length === 0 ? (
+          <div className="text-gray-500 text-center">No comments yet.</div>
         ) : (
           <div className="space-y-6">
             {comments.map((comment) => (
@@ -263,11 +272,9 @@ export const Comments = ({ chapterId }: { chapterId: string }) => {
                 }}
               />
             ))}
-          </div> // here also
+          </div>
         )}
       </div>
     </div>
   );
 };
-
-//working all with realtime comments and like

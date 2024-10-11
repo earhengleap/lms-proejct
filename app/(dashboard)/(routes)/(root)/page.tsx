@@ -1,4 +1,5 @@
 // app/(dashboard)/dashboard/page.tsx
+
 import { getDashboardCourses } from "@/actions/get-dashboard-courses";
 import CoursesList from "@/components/courses-list";
 import { auth } from "@clerk/nextjs/server";
@@ -12,8 +13,7 @@ const Dashboard = async () => {
     return null; // The RootRedirect component will handle the sign-in dialog
   }
 
-  const { completedCourses, coursesInProgress } =
-    await getDashboardCourses(userId);
+  const { completedCourses, coursesInProgress } = await getDashboardCourses(userId);
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -32,7 +32,10 @@ const Dashboard = async () => {
           />
         </div>
         <CoursesList
-          items={[...coursesInProgress, ...completedCourses]}
+          items={[...coursesInProgress, ...completedCourses].map(course => ({
+            ...course,
+            publisherName: course.publisher?.name ?? "Unknown Publisher"
+          }))}
           userId={userId}
         />
       </div>

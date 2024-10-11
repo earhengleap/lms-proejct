@@ -162,7 +162,8 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
       <div className="mt-8 px-4 sm:px-6 lg:px-8 w-full">
         <div className="bg-white border rounded-md p-6 transition-all duration-300 hover:shadow-sm">
           <h2 className="text-2xl font-bold mb-4">Comments</h2>
-          <Comments chapterId={chapterId} />
+          {/* Pass the hasPurchased prop to the Comments component */}
+          <Comments chapterId={chapterId} hasPurchased={hasPurchased} />
         </div>
       </div>
     </div>

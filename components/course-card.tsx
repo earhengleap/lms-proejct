@@ -13,7 +13,7 @@ interface CourseCardProps {
   price: number;
   progress: number | null;
   category: string;
-  publisherName: string; // New prop for publisher name
+  publisherName: string;
   isFromDashboard?: boolean;
   firstChapterId: string;
 }
@@ -26,7 +26,7 @@ const CourseCard = ({
   price,
   progress,
   category,
-  publisherName, // Include this in the destructured props
+  publisherName,
   isFromDashboard = false,
   firstChapterId,
 }: CourseCardProps) => {
