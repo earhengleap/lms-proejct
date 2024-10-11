@@ -1,4 +1,4 @@
-import { isTeacher } from "@/lib/teacher";
+import { isTeacher } from "@/lib/administrator";
 import { auth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 

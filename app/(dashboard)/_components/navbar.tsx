@@ -1,3 +1,5 @@
+//app/(dashboard)/_components/navbar.tsx
+
 import NavbarRoutes from "@/components/navbar-routes";
 import MobileSidebar from "./mobile-sidebar";
 

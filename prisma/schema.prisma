@@ -19,19 +19,20 @@ model Publisher {
 }
 
 model User {
-  id          String           @id @default(uuid())
-  userId      String           @unique
-  firstName   String?
-  lastName    String?
-  email       String           @unique
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  quizzes     Quiz[]
-  submissions QuizSubmission[]
-  comments    Comment[]
-  likes       Like[]
-  courses     Course[]
-  chapters    Chapter[]
+  id           String           @id @default(uuid())
+  userId       String           @unique
+  firstName    String?
+  lastName     String?
+  email        String           @unique
+  isInstructor Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  quizzes      Quiz[]
+  submissions  QuizSubmission[]
+  comments     Comment[]
+  likes        Like[]
+  courses      Course[]
+  chapters     Chapter[]
 }
 
 model Course {

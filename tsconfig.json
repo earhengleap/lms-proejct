@@ -21,6 +21,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "convex/quizz-attempts.ts", "app/api/quizz/quiz-submission"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "convex/quizz-attempts.ts", "app/api/quizz/quiz-submission", "app/api/be-instructor"],
   "exclude": ["node_modules"]
 }

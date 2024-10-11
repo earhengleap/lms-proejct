@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Play, ArrowRight, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -85,8 +85,9 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 
   return (
     <div className="w-full space-y-4 animate-slideIn">
-      <div className="rounded-lg overflow-hidden shadow-md transition-all duration-300 hover:shadow-lg">
-        <div className="bg-gradient-to-br from-sky-500 to-blue-600 p-6 text-white">
+      <div className="rounded-lg overflow-hidden transition-all duration-300 hover:shadow-sm">
+        {/* Updated gradient background with Beach gradient */}
+        <div className="bg-gradient-to-br from-[#4FACFE] to-[#00F2FE] p-6 text-white border">
           <h2 className="font-bold text-2xl mb-3 transition-transform duration-300 hover:translate-x-1">
             {isFirstChapter
               ? "Watch the First Chapter Free!"
