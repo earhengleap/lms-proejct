@@ -17,11 +17,10 @@ export async function GET(req: NextRequest) {
       select: { isInstructor: true },
     });
 
-    if (!user) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
+    // If user is not found, assume they are not an instructor
+    const isInstructor = user?.isInstructor ?? false;
 
-    return NextResponse.json({ isInstructor: user.isInstructor }, { status: 200 });
+    return NextResponse.json({ isInstructor }, { status: 200 });
   } catch (error) {
     console.error("Error fetching instructor status:", error);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
