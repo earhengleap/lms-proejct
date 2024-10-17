@@ -30,6 +30,10 @@ export const ChapterIdClient = ({
 }: ChapterIdClientProps) => {
   const [isPending, setIsPending] = useState(initialPendingStatus);
 
+  const handlePendingChange = (newPendingStatus: boolean) => {
+    setIsPending(newPendingStatus);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between">
@@ -54,7 +58,7 @@ export const ChapterIdClient = ({
               chapterId={chapterId}
               isPublished={chapter.isPublished}
               initialPendingStatus={isPending}
-              onPendingChange={setIsPending}
+              onPendingChange={handlePendingChange}
             />
           </div>
         </div>

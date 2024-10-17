@@ -33,7 +33,6 @@ model User {
   likes        Like[]
   courses      Course[]
   chapters     Chapter[]
-  Purchase     Purchase[]
 }
 
 model Course {
@@ -130,13 +129,10 @@ model Purchase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  User      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, courseId])
   @@index([courseId])
 }
-
-//OLD CODE
 
 model StripeCustomer {
   id               String   @id @default(uuid())

@@ -16,6 +16,7 @@ interface ChapterActionsProps {
   chapterId: string;
   isPublished: boolean;
   initialPendingStatus: boolean;
+  onPendingChange: (isPending: boolean) => void;
 }
 
 export const ChapterActions = ({
@@ -24,6 +25,7 @@ export const ChapterActions = ({
   chapterId,
   isPublished,
   initialPendingStatus,
+  onPendingChange,
 }: ChapterActionsProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +35,6 @@ export const ChapterActions = ({
   );
   const [isApproved, setIsApproved] = useState(false);
 
-  // Updated useEffect to handle initial pending status
   useEffect(() => {
     const checkNotification = async () => {
       try {
@@ -46,8 +47,10 @@ export const ChapterActions = ({
           if (data.message.includes("approved")) {
             setIsApproved(true);
             setIsPending(false);
+            onPendingChange(false);
           } else if (data.message.includes("rejected")) {
             setIsPending(false);
+            onPendingChange(false);
           }
         }
       } catch (error) {
@@ -58,7 +61,7 @@ export const ChapterActions = ({
     const intervalId = setInterval(checkNotification, 5000);
 
     return () => clearInterval(intervalId);
-  }, [courseId, chapterId]);
+  }, [courseId, chapterId, onPendingChange]);
 
   const onClick = async () => {
     try {
@@ -91,6 +94,7 @@ export const ChapterActions = ({
       );
       toast.success("Deletion request submitted for approval.");
       setIsPending(true);
+      onPendingChange(true);
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong.");
@@ -107,6 +111,7 @@ export const ChapterActions = ({
       );
       toast.success("Deletion request cancelled.");
       setIsPending(false);
+      onPendingChange(false);
       router.refresh();
     } catch (error) {
       toast.error("Failed to cancel deletion request.");
