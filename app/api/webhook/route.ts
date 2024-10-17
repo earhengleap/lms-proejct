@@ -1,3 +1,5 @@
+// app/api/webhook/route.ts
+
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";

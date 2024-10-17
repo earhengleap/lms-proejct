@@ -1,5 +1,3 @@
-//app/(dashboard)/(routes)/search/preview/courses/[courseId]chapters/[chapterId]/page.tsx
-
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
@@ -33,6 +31,7 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
         course: {
           include: {
             chapters: {
+              where: { isPublished: true }, // Only include published chapters
               include: {
                 userProgress: {
                   where: {
@@ -74,20 +73,22 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
   const price = chapter.course.price || 0;
   const hasPurchased = userId ? chapter.course.purchases.length > 0 : false;
 
-  const chaptersLength = chapter.course.chapters.length;
+  const publishedChapters = chapter.course.chapters.filter(
+    (ch) => ch.isPublished
+  );
+  const chaptersLength = publishedChapters.length;
   const completedChapters = hasPurchased
-    ? chapter.course.chapters.filter((ch) => ch.userProgress?.[0]?.isCompleted)
-        .length
+    ? publishedChapters.filter((ch) => ch.userProgress?.[0]?.isCompleted).length
     : 0;
 
   const progress = hasPurchased
     ? Math.round((completedChapters / chaptersLength) * 100)
     : 0;
 
-  const userProgress = chapter.course.chapters.find((ch) => ch.id === chapterId)
+  const userProgress = publishedChapters.find((ch) => ch.id === chapterId)
     ?.userProgress?.[0];
 
-  const nextChapter = chapter.course.chapters.find(
+  const nextChapter = publishedChapters.find(
     (ch) => ch.position === chapter.position + 1
   );
 
@@ -162,7 +163,6 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
       <div className="mt-8 px-4 sm:px-6 lg:px-8 w-full">
         <div className="bg-white border rounded-md p-6 transition-all duration-300 hover:shadow-sm">
           <h2 className="text-2xl font-bold mb-4">Comments</h2>
-          {/* Pass the hasPurchased prop to the Comments component */}
           <Comments chapterId={chapterId} hasPurchased={hasPurchased} />
         </div>
       </div>
