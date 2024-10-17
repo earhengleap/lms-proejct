@@ -176,13 +176,13 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
               >
                 {buttonContent("stripe")}
               </Button>
-              {/* <Button
+              <Button
                 className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
                 onClick={userId ? handleAbaPaywayPayment : handleSignInClick}
                 disabled={isLoading}
               >
                 {buttonContent("abapay")}
-              </Button> */}
+              </Button>
             </div>
           )}
         </div>
