@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
@@ -47,7 +48,7 @@ export const VideoPlayer = ({
           confetti.onOpen();
         }
 
-        toast.success("Progress updated.");
+        toast.success("Progress updated");
         router.refresh();
 
         if (nextChapterId) {
@@ -55,38 +56,50 @@ export const VideoPlayer = ({
         }
       }
     } catch (error) {
-      toast.error("Something went wrong.");
+      toast.error("Something went wrong");
     }
   };
 
   return (
-    <div className="relative aspect-video">
-      {!isReady && !isLocked && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
-          <Loader2 className="h-8 w-8 animate-spin text-secondary" />
-        </div>
-      )}
-      {isLocked && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800 flex-col gap-y-2 text-secondary">
-          <Lock className="h-8 w-8" />
-          <p className="">This chapter is locked.</p>
-        </div>
-      )}
-      {!isLocked && playbackId && (
-        <MuxPlayer
-          title={title}
-          className={cn(!isReady && "hidden")}
-          onCanPlay={() => setIsReady(true)}
-          onEnded={onEnd}
-          autoPlay
-          playbackId={playbackId}
-        />
-      )}
-      {!isLocked && !playbackId && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-secondary">
-          <p>No video available</p>
-        </div>
-      )}
+    <div
+      className="relative w-full overflow-hidden rounded-md shadow-lg"
+      style={{ paddingTop: "56.25%" }}
+    >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="absolute inset-0"
+      >
+        {!isReady && !isLocked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
+            <Loader2 className="h-8 w-8 animate-spin text-secondary" />
+          </div>
+        )}
+        {isLocked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-secondary">
+            <div className="text-center">
+              <Lock className="h-8 w-8 mx-auto mb-2" />
+              <p className="font-semibold">This chapter is locked</p>
+            </div>
+          </div>
+        )}
+        {!isLocked && playbackId && (
+          <MuxPlayer
+            title={title}
+            className={cn("absolute inset-0", !isReady && "hidden")}
+            onCanPlay={() => setIsReady(true)}
+            onEnded={onEnd}
+            autoPlay
+            playbackId={playbackId}
+          />
+        )}
+        {!isLocked && !playbackId && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-secondary">
+            <p className="font-semibold">No video available</p>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
 };

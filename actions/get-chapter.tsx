@@ -1,3 +1,5 @@
+// actions/get-chapter.ts
+
 import { db } from "@/lib/db";
 import { Attachment, Chapter } from "@prisma/client";
 
@@ -24,8 +26,8 @@ export const getChapter = async ({
 
     const course = await db.course.findUnique({
       where: {
-        isPublished: true,
         id: courseId,
+        OR: [{ isPublished: true }, { purchases: { some: { userId } } }],
       },
       select: {
         price: true,
@@ -35,7 +37,10 @@ export const getChapter = async ({
     const chapter = await db.chapter.findUnique({
       where: {
         id: chapterId,
-        isPublished: true,
+        OR: [
+          { isPublished: true },
+          { course: { purchases: { some: { userId } } } },
+        ],
       },
     });
 
@@ -65,7 +70,10 @@ export const getChapter = async ({
       nextChapter = await db.chapter.findFirst({
         where: {
           courseId: courseId,
-          isPublished: true,
+          OR: [
+            { isPublished: true },
+            { course: { purchases: { some: { userId } } } },
+          ],
           position: {
             gt: chapter?.position,
           },
@@ -77,23 +85,23 @@ export const getChapter = async ({
     }
 
     const userProgress = await db.userProgress.findUnique({
-        where: {
-            userId_chapterId: {
-                userId,
-                chapterId,
-            }
-        }
+      where: {
+        userId_chapterId: {
+          userId,
+          chapterId,
+        },
+      },
     });
 
     return {
-        chapter,
-        course,
-        muxData,
-        attachments,
-        nextChapter,
-        userProgress,
-        purchase,
-    }
+      chapter,
+      course,
+      muxData,
+      attachments,
+      nextChapter,
+      userProgress,
+      purchase,
+    };
   } catch (error) {
     console.log("[GET_CHAPTER]", error);
     return {
@@ -101,7 +109,7 @@ export const getChapter = async ({
       course: null,
       muxData: null,
       attachments: [],
-      nextChatper: null,
+      nextChapter: null,
       userProgress: null,
       purchase: null,
     };

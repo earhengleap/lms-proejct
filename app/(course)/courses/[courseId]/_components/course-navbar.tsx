@@ -1,3 +1,5 @@
+// app/(course)/courses/[courseId]/_components/course-navbar.tsx
+
 import NavbarRoutes from "@/components/navbar-routes";
 import { Chapter, Course, UserProgress } from "@prisma/client";
 import CourseMobileSidebar from "./course-mobile-sidebar";

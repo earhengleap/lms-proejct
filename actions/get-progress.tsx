@@ -1,3 +1,5 @@
+// actions/get-progress.tsx
+
 import { db } from "@/lib/db";
 
 export const getProgress = async (
@@ -5,32 +7,39 @@ export const getProgress = async (
   courseId: string
 ): Promise<number> => {
   try {
-    const publishedChapters = await db.chapter.findMany({
+    const purchase = await db.purchase.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId,
+        },
+      },
+    });
+
+    const chapters = await db.chapter.findMany({
       where: {
         courseId: courseId,
-        isPublished: true,
+        ...(purchase ? {} : { isPublished: true }),
       },
       select: {
         id: true,
       },
     });
 
-    const publishedChapterIds = publishedChapters.map((chapter) => {
-      return chapter.id;
-    });
+    const chapterIds = chapters.map((chapter) => chapter.id);
 
     const validCompletedChapters = await db.userProgress.count({
       where: {
         userId: userId,
         chapterId: {
-          in: publishedChapterIds,
+          in: chapterIds,
         },
         isCompleted: true,
       },
     });
 
     const progressPercentage =
-      (validCompletedChapters / publishedChapterIds.length) * 100;
+      (validCompletedChapters / chapterIds.length) * 100;
     return progressPercentage;
   } catch (error) {
     console.log("GET_PROGRESS_ERROR", error);

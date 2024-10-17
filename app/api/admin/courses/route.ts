@@ -1,9 +1,9 @@
-// app/api/admin/courses/route.ts
-
 import { NextResponse } from 'next/server';
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { isAdministrator } from "@/lib/administrator";
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   try {

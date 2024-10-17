@@ -1,3 +1,5 @@
+// app/(course)/courses/[courseId]/_components/course-sidebar-item.tsx
+
 "use client";
 
 import { cn } from "@/lib/utils";

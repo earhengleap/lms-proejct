@@ -1,3 +1,5 @@
+//app/(dashboard)/(routes)/teacher/courses/[courseId]/chapters/[chapterId]/_components/chapter-actions.tsx
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -64,7 +66,26 @@ export const ChapterActions = ({
   }, [courseId, chapterId, onPendingChange]);
 
   const onClick = async () => {
-    // ... (rest of the onClick function remains the same)
+    try {
+      setIsLoading(true);
+
+      if (isPublished) {
+        await axios.patch(
+          `/api/courses/${courseId}/chapters/${chapterId}/unpublish`
+        );
+        toast.success("Chapter unpublished.");
+      } else {
+        await axios.patch(
+          `/api/courses/${courseId}/chapters/${chapterId}/publish`
+        );
+        toast.error("Chapter published.");
+      }
+      router.refresh();
+    } catch (error) {
+      toast.error("Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const onDelete = async () => {

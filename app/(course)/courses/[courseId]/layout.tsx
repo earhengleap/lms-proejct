@@ -1,3 +1,5 @@
+// app/(course)/courses/[courseId]/layout.tsx
+
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -14,19 +16,30 @@ const CourseLayout = async ({
 }) => {
   const { userId } = auth();
 
-  if (!userId ) {
+  if (!userId) {
     return redirect("/");
   }
 
+  // Check if the user has purchased the course
+  const purchase = await db.purchase.findUnique({
+    where: {
+      userId_courseId: {
+        userId,
+        courseId: params.courseId,
+      },
+    },
+  });
+
+  // Fetch the course with conditional chapter filtering
   const course = await db.course.findUnique({
     where: {
       id: params.courseId,
     },
     include: {
       chapters: {
-        where: {
-          isPublished: true,
-        },
+        where: purchase
+          ? {} // If purchased, include all chapters
+          : { isPublished: true }, // If not purchased, only include published chapters
         include: {
           userProgress: {
             where: {
@@ -53,7 +66,10 @@ const CourseLayout = async ({
         <CourseNavbar course={course} progressCount={progressCount} />
       </div>
       <div className="hidden md:flex h-full w-80 flex-col fixed inset-y-0 z-50">
-        <CourseSidebar course={course} progressCount={progressCount} />
+        <CourseSidebar
+          course={course}
+          progressCount={progressCount}
+        />
       </div>
       <main className="md:pl-80 pt-[80px] h-full">{children}</main>
     </div>

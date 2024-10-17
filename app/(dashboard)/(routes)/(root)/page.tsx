@@ -13,11 +13,12 @@ const Dashboard = async () => {
     return null; // The RootRedirect component will handle the sign-in dialog
   }
 
-  const { completedCourses, coursesInProgress } = await getDashboardCourses(userId);
+  const { completedCourses, coursesInProgress } =
+    await getDashboardCourses(userId);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="space-y-4">
+    <>
+      <div className="p-6 space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InfoCard
             icon={Clock}
@@ -32,14 +33,14 @@ const Dashboard = async () => {
           />
         </div>
         <CoursesList
-          items={[...coursesInProgress, ...completedCourses].map(course => ({
+          items={[...coursesInProgress, ...completedCourses].map((course) => ({
             ...course,
-            publisherName: course.publisher?.name ?? "Unknown Publisher"
+            publisherName: course.publisher?.name ?? "Unknown Publisher",
           }))}
           userId={userId}
         />
       </div>
-    </div>
+    </>
   );
 };
 
