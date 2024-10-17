@@ -1,5 +1,3 @@
-//app/(dashboard)/_components/sidebar-routes.tsx
-
 "use client";
 
 import {
@@ -11,6 +9,11 @@ import {
   Settings,
   Users,
   FileText,
+  LayoutDashboard,
+  GraduationCap,
+  MessageSquare,
+  BarChart2,
+  CreditCard,
 } from "lucide-react";
 import SidebarItems from "./sidebar-items";
 import { usePathname, useRouter } from "next/navigation";
@@ -18,13 +21,6 @@ import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 import LoginModal from "@/components/login-modal";
 import { isAdministrator } from "@/lib/administrator";
-import {
-  LayoutDashboard,
-  GraduationCap,
-  MessageSquare,
-  BarChart2,
-  CreditCard,
-} from "lucide-react";
 
 const studentRoutes = [
   {
@@ -101,7 +97,7 @@ export const SidebarRoutes = () => {
   const { userId, isLoaded } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  const isTeacherPage = pathname?.includes("/teacher");
+  const isTeacherPage = pathname?.startsWith("/teacher");
   const isAdminPage = pathname?.startsWith("/administrator");
 
   useEffect(() => {
@@ -112,7 +108,13 @@ export const SidebarRoutes = () => {
 
   let routes;
   if (isAdministrator(userId)) {
-    routes = isAdminPage ? adminRoutes : studentRoutes;
+    if (isAdminPage) {
+      routes = adminRoutes;
+    } else if (isTeacherPage) {
+      routes = teacherRoutes;
+    } else {
+      routes = studentRoutes;
+    }
   } else {
     routes = isTeacherPage ? teacherRoutes : studentRoutes;
   }

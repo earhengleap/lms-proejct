@@ -1,115 +1,134 @@
 // app/api/courses/[courseId]/route.ts
 
 import { db } from "@/lib/db";
-// import { isTeacher } from "@/lib/teacher";
+import { isAdministrator } from "@/lib/administrator";
 import { auth } from "@clerk/nextjs/server";
 import Mux from "@mux/mux-node";
 import { NextResponse } from "next/server";
 
 const muxConfig = {
-    tokenID: process.env.MUX_TOKEN_ID!,
-    tokenSecret: process.env.MUX_TOKEN_SECRET!,
+  tokenID: process.env.MUX_TOKEN_ID!,
+  tokenSecret: process.env.MUX_TOKEN_SECRET!,
 };
 
 const mux = new Mux(muxConfig);
 
-export async function DELETE (
-    req: Request,
-    { params } : { params :{ courseId: string } }
+export async function DELETE(
+  req: Request,
+  { params }: { params: { courseId: string } }
 ) {
-    try {
-        const { userId } = auth();
+  try {
+    const { userId } = auth();
 
-        if(!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
-
-        const coures = await db.course.findUnique({
-            where: {
-                id: params.courseId,
-                userId
-            },
-            include: {
-                chapters: {
-                    include: {
-                        muxData: true
-                    }
-                }
-            }
-        })
-
-        if (!coures) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
-
-        for (const chapter of coures.chapters) {
-            if (chapter.muxData?.assetId) {
-                await mux.video.assets.delete(chapter.muxData.assetId);
-            }
-        }
-
-        const deletedCourse = await db.course.delete({
-            where: {
-                id: params.courseId
-            }
-        })
-
-        return NextResponse.json(deletedCourse);
-
-    } catch (error) {
-        console.log("[COURSES_ID_DELETE]", error);
-        return new NextResponse("Internal Error", { status: 500})
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    const isAdmin = await isAdministrator(userId);
+
+    if (!isAdmin) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const course = await db.course.findUnique({
+      where: {
+        id: params.courseId,
+      },
+      include: {
+        chapters: {
+          include: {
+            muxData: true,
+          },
+        },
+      },
+    });
+
+    if (!course) {
+      return new NextResponse("Not found", { status: 404 });
+    }
+
+    for (const chapter of course.chapters) {
+      if (chapter.muxData?.assetId) {
+        await mux.video.assets.delete(chapter.muxData.assetId);
+      }
+    }
+
+    const deletedCourse = await db.course.delete({
+      where: {
+        id: params.courseId,
+      },
+    });
+
+    await db.deletionRequest.deleteMany({
+      where: {
+        itemId: params.courseId,
+        type: "course",
+      },
+    });
+
+    await db.activity.create({
+      data: {
+        type: "COURSE_DELETED",
+        description: `Course deleted: ${deletedCourse.title}`,
+        userId,
+        itemId: params.courseId,
+        itemType: "course",
+      },
+    });
+
+    return NextResponse.json(deletedCourse);
+  } catch (error) {
+    console.log("[COURSES_ID_DELETE]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
 }
 
-
 export async function PATCH(
-    req: Request,
-    { params }: { params: { courseId: string } }
+  req: Request,
+  { params }: { params: { courseId: string } }
 ) {
-    try {
-        const { userId } = auth();
-        const { courseId } = params;
-        const values = await req.json();
+  try {
+    const { userId } = auth();
+    const { courseId } = params;
+    const values = await req.json();
 
-        if (!userId) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
-
-        let publisherId = undefined;
-
-        if (values.publisherName) {
-            // Find or create the publisher
-            let publisher = await db.publisher.findFirst({
-                where: { name: values.publisherName }
-            });
-
-            if (!publisher) {
-                publisher = await db.publisher.create({
-                    data: { name: values.publisherName }
-                });
-            }
-
-            publisherId = publisher.id;
-        }
-
-        const course = await db.course.update({
-            where: {
-                id: courseId,
-                userId,
-            },
-            data: {
-                ...values,
-                publisherId: publisherId || undefined,
-            },
-            include: {
-                publisher: true
-            }
-        });
-
-        return NextResponse.json(course);
-    } catch (error) {
-        console.log("[COURSE_ID]", error);
-        return new NextResponse("Internal Error", { status: 500 });
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
     }
+
+    let publisherId = undefined;
+
+    if (values.publisherName) {
+      let publisher = await db.publisher.findFirst({
+        where: { name: values.publisherName }
+      });
+
+      if (!publisher) {
+        publisher = await db.publisher.create({
+          data: { name: values.publisherName }
+        });
+      }
+
+      publisherId = publisher.id;
+    }
+
+    const course = await db.course.update({
+      where: {
+        id: courseId,
+        userId,
+      },
+      data: {
+        ...values,
+        publisherId: publisherId || undefined,
+      },
+      include: {
+        publisher: true
+      }
+    });
+
+    return NextResponse.json(course);
+  } catch (error) {
+    console.log("[COURSE_ID]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
 }

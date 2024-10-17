@@ -1,3 +1,5 @@
+//app/(dashboard)/(routes)/teacher/courses/_components/data-table.tsx
+
 "use client";
 
 import * as React from "react";
@@ -116,7 +118,7 @@ export function DataTable<TData, TValue>({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  No courses found.
                 </TableCell>
               </TableRow>
             )}
@@ -144,3 +146,5 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
+
+//OLD CODE

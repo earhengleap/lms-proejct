@@ -1,8 +1,10 @@
+// app/(dashboard)/(routes)/search/preview/courses/[courseId]/chapters/[chapterId]/_components/chapterid-client.tsx
+
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Play, ArrowRight, ShoppingCart } from "lucide-react";
+import { Play, ArrowRight, ShoppingCart, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoginModal from "@/components/login-modal";
 import axios from "axios";
@@ -35,25 +37,78 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 }) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingPaymentMethod, setLoadingPaymentMethod] = useState<
+    string | null
+  >(null);
   const router = useRouter();
 
   const handleSignInClick = () => {
     setIsLoginModalOpen(true);
   };
 
-  const handleEnrollClick = async () => {
+  // Handle Stripe Payment
+  const handleStripePayment = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`/api/courses/${courseId}/checkout`);
+      setLoadingPaymentMethod("stripe");
+      const response = await axios.post(`/api/courses/${courseId}/checkout`, {
+        paymentMethod: "stripe",
+      });
       window.location.href = response.data.url;
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
+      setLoadingPaymentMethod(null);
     }
   };
 
-  const buttonContent = () => {
+  const handleAbaPaywayPayment = async () => {
+    try {
+      setIsLoading(true);
+      setLoadingPaymentMethod("abapay");
+
+      const response = await fetch(
+        `/api/courses/${courseId}/aba-pay-way-checkout`,
+        {
+          method: "POST",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to initiate payment");
+      }
+
+      const paymentData = await response.json();
+
+      // Dynamically create the form
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = paymentData.url;
+
+      // Add hidden inputs based on the paymentData returned from the server
+      Object.keys(paymentData).forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = paymentData[key];
+        form.appendChild(input);
+      });
+
+      // Append the form to the body and submit
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      console.error("Payment failed:", error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+      setLoadingPaymentMethod(null);
+    }
+  };
+
+  // Function to handle the button content with payment method and price
+  const buttonContent = (paymentMethod: "stripe" | "abapay") => {
     if (!userId) {
       return (
         <>
@@ -77,8 +132,16 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
     }
     return (
       <>
-        <ShoppingCart className="h-5 w-5 mr-2" />
-        {isLoading ? "Processing..." : `Enroll for $${price}`}
+        {paymentMethod === "stripe" ? (
+          <CreditCard className="h-5 w-5 mr-2" />
+        ) : (
+          <ShoppingCart className="h-5 w-5 mr-2" />
+        )}
+        {isLoading && loadingPaymentMethod === paymentMethod
+          ? "Processing..."
+          : `Enroll with ${
+              paymentMethod === "stripe" ? "Stripe" : "ABA PayWay"
+            } ${price.toFixed(2)} USD`}
       </>
     );
   };
@@ -86,7 +149,6 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
   return (
     <div className="w-full space-y-4 animate-slideIn">
       <div className="rounded-lg overflow-hidden transition-all duration-300 hover:shadow-sm">
-        {/* Updated gradient background with Beach gradient */}
         <div className="bg-gradient-to-br from-[#4FACFE] to-[#00F2FE] p-6 text-white border">
           <h2 className="font-bold text-2xl mb-3 transition-transform duration-300 hover:translate-x-1">
             {isFirstChapter
@@ -102,17 +164,26 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
           {userId && hasPurchased ? (
             <Link href={`/courses/${courseId}/chapters/${chapterId}`} passHref>
               <Button className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]">
-                {buttonContent()}
+                {buttonContent("stripe")}
               </Button>
             </Link>
           ) : (
-            <Button
-              className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
-              onClick={userId ? handleEnrollClick : handleSignInClick}
-              disabled={isLoading}
-            >
-              {buttonContent()}
-            </Button>
+            <div className="space-y-2">
+              <Button
+                className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
+                onClick={userId ? handleStripePayment : handleSignInClick}
+                disabled={isLoading}
+              >
+                {buttonContent("stripe")}
+              </Button>
+              {/* <Button
+                className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
+                onClick={userId ? handleAbaPaywayPayment : handleSignInClick}
+                disabled={isLoading}
+              >
+                {buttonContent("abapay")}
+              </Button> */}
+            </div>
           )}
         </div>
       </div>

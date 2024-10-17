@@ -1,3 +1,5 @@
+// components/modals/confirm-modal.tsx
+
 "use client";
 
 import {
@@ -15,22 +17,33 @@ import {
 interface ConfirmModalProps {
   children: React.ReactNode;
   onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmText?: string;
+  cancelText?: string;
 }
 
-export const ConfirmModal = ({ children, onConfirm }: ConfirmModalProps) => {
+export const ConfirmModal = ({
+  children,
+  onConfirm,
+  title,
+  description,
+  confirmText = "Confirm",
+  cancelText = "Cancel",
+}: ConfirmModalProps) => {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{children}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This action cannot be undone.
-          </AlertDialogDescription>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>Confirm</AlertDialogAction>
+          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
+          <AlertDialogAction onClick={onConfirm}>
+            {confirmText}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

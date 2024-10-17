@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/teacher/courses/[courseId]/chapters/[chapterId]/page.tsx
+
 import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
@@ -37,6 +39,17 @@ const ChapterIdPage = async ({
   if (!chapter) {
     return redirect("/");
   }
+
+  // Check if there is a pending deletion request for the chapter
+  const deletionRequest = await db.deletionRequest.findFirst({
+    where: {
+      itemId: params.chapterId,
+      type: "chapter",
+      status: "pending",
+    },
+  });
+
+  const initialPendingStatus = Boolean(deletionRequest);
 
   const requireFields = [
     chapter.title,
@@ -82,6 +95,7 @@ const ChapterIdPage = async ({
                 courseId={params.courseId}
                 chapterId={params.chapterId}
                 isPublished={chapter.isPublished}
+                initialPendingStatus={initialPendingStatus}
               />
             </div>
           </div>

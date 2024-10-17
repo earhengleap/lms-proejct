@@ -33,6 +33,7 @@ model User {
   likes        Like[]
   courses      Course[]
   chapters     Chapter[]
+  Purchase     Purchase[]
 }
 
 model Course {
@@ -129,10 +130,13 @@ model Purchase {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, courseId])
   @@index([courseId])
 }
+
+//OLD CODE
 
 model StripeCustomer {
   id               String   @id @default(uuid())
@@ -247,4 +251,28 @@ model Like {
   @@unique([userId, commentId])
   @@index([userId])
   @@index([commentId])
+}
+
+model DeletionRequest {
+  id        String   @id @default(uuid())
+  type      String // "chapter" or "course"
+  itemId    String // ID of the chapter or course
+  userId    String // ID of the user requesting deletion
+  status    String // "pending", "approved", "rejected"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([itemId])
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  type        String
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String? // The user who performed the action
+  itemId      String? // The ID of the related item (course or chapter)
+  itemType    String? // "course" or "chapter"
 }

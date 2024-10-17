@@ -1,7 +1,10 @@
+// app/api/courses/[courseId]/chapters/[chapterId]/route.ts
+
 import Mux from "@mux/mux-node";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { isAdministrator } from "@/lib/administrator"; // Ensure this function is implemented
 
 const muxConfig = {
     tokenID: process.env.MUX_TOKEN_ID!,
@@ -21,14 +24,10 @@ export async function DELETE(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const ownCourse = await db.course.findUnique({
-      where: {
-        id: params.courseId,
-        userId
-      }
-    });
+    // Check if the user is an administrator
+    const isAdmin = await isAdministrator(userId);
 
-    if (!ownCourse) {
+    if (!isAdmin) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -84,6 +83,25 @@ export async function DELETE(
         }
       });
     }
+
+    // Delete the corresponding deletion request
+    await db.deletionRequest.deleteMany({
+      where: {
+        itemId: params.chapterId,
+        type: "chapter",
+      },
+    });
+
+    // Create an activity log for the deletion
+    await db.activity.create({
+      data: {
+        type: "CHAPTER_DELETED",
+        description: `Chapter deleted: ${deletedChapter.title}`,
+        userId,
+        itemId: params.chapterId,
+        itemType: "chapter",
+      },
+    });
 
     return NextResponse.json(deletedChapter);
   } catch (error) {
@@ -195,3 +213,5 @@ export async function PATCH(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+
+//OLD CODE

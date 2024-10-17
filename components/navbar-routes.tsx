@@ -5,8 +5,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { GraduationCap, LogOut, LogIn } from "lucide-react";
 import Link from "next/link";
-import { useAuth, UserButton, ClerkLoaded, ClerkLoading } from "@clerk/nextjs";
+import {
+  useAuth,
+  UserButton,
+  ClerkLoaded,
+  ClerkLoading,
+  useUser,
+} from "@clerk/nextjs";
 import SearchInput from "./search-input";
+import Notifications from "./notifications";
 import { Logo } from "@/app/(dashboard)/_components/logo";
 import Modal from "./modal";
 import { motion } from "framer-motion";
@@ -24,7 +31,6 @@ const handleBecomeInstructor = async () => {
       throw new Error("Failed to update instructor status");
     }
 
-    // Redirect to /teacher/courses after successful update
     window.location.href = "/teacher/courses";
   } catch (error) {
     console.error("Error becoming instructor:", error);
@@ -49,8 +55,23 @@ const fetchInstructorStatus = async () => {
   }
 };
 
+const checkAndCreateUser = async () => {
+  try {
+    const response = await fetch("/api/check-user", {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      console.error("Failed to check or create user.");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
 const NavbarRoutes = () => {
   const { isSignedIn } = useAuth();
+  const { user } = useUser();
   const pathname = usePathname();
   const router = useRouter();
   const [isInstructorModalOpen, setIsInstructorModalOpen] = useState(false);
@@ -62,6 +83,7 @@ const NavbarRoutes = () => {
 
   useEffect(() => {
     if (isSignedIn) {
+      checkAndCreateUser();
       fetchInstructorStatus().then((status) => {
         setIsInstructor(status);
       });
@@ -81,7 +103,6 @@ const NavbarRoutes = () => {
     setIsInstructorModalOpen(false);
   };
 
-  // Animation variants for the text reveal
   const textVariants = {
     hidden: { opacity: 0 },
     visible: (i = 0) => ({
@@ -90,7 +111,6 @@ const NavbarRoutes = () => {
     }),
   };
 
-  // Split the text into words for individual animation
   const text =
     "Becoming teachers without the need for verification. This encourages a free, community-driven learning environment where anyone can share their skills.";
   const words = text.split(" ");
@@ -98,14 +118,12 @@ const NavbarRoutes = () => {
   return (
     <>
       <div className="flex w-full items-center justify-between gap-x-4">
-        {/* Left Side - Logo */}
         <div className="flex-shrink-0">
           <Link href={"/"}>
             <Logo />
           </Link>
         </div>
 
-        {/* Middle - SearchInput (only show on larger screens) */}
         <div className="hidden lg:flex flex-1 justify-center">
           {isSearchPage && (
             <div className="w-full max-w-lg">
@@ -114,7 +132,6 @@ const NavbarRoutes = () => {
           )}
         </div>
 
-        {/* Right Side - User and Navigation */}
         <div className="flex items-center gap-x-4">
           {isTeacherPage || isCoursePage ? (
             <Link href={"/"}>
@@ -133,6 +150,8 @@ const NavbarRoutes = () => {
               {isInstructor ? "Instructor Dashboard" : "Be Instructor"}
             </Button>
           ) : null}
+
+          {isSignedIn && user && <Notifications userId={user.id} />}
 
           <ClerkLoading>
             <div className="h-6 w-6 rounded-full animate-spin border-4 border-gray-300 border-t-transparent"></div>
@@ -153,7 +172,6 @@ const NavbarRoutes = () => {
         </div>
       </div>
 
-      {/* Modal for Becoming an Instructor */}
       <Modal
         isOpen={isInstructorModalOpen}
         onClose={() => setIsInstructorModalOpen(false)}
