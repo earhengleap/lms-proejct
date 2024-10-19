@@ -1,4 +1,4 @@
-// app/api/courses/[courseId]/checkout/route.ts
+//app/api/courses/[courseId]/checkout/route.ts
 
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db"; // Import your db connection

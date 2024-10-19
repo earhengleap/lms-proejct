@@ -123,16 +123,21 @@ model UserProgress {
 }
 
 model Purchase {
-  id        String   @id @default(uuid())
-  userId    String
-  courseId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  userId        String
+  courseId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  amount        Float    // Add the payment amount
+  transactionId String   // Add transaction ID
+  paymentStatus String   // Store status as "completed"
+  paymentMethod String   // e.g., "abapay"
+  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([courseId])
 }
+
 
 model StripeCustomer {
   id               String   @id @default(uuid())

@@ -81,7 +81,12 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 
       const paymentData = await response.json();
 
-      // Dynamically create the form
+      // Check if the payment URL is returned
+      if (!paymentData.url) {
+        throw new Error("Payment URL missing in the response");
+      }
+
+      // Dynamically create the form and submit it to ABA PayWay
       const form = document.createElement("form");
       form.method = "POST";
       form.action = paymentData.url;
@@ -95,7 +100,7 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
         form.appendChild(input);
       });
 
-      // Append the form to the body and submit
+      // Append the form to the body and submit it
       document.body.appendChild(form);
       form.submit();
     } catch (error) {
@@ -197,3 +202,5 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 };
 
 export default ChapterIdClient;
+
+//NEW CODE TAHT CAN WORK WITH ABA PAYWAY

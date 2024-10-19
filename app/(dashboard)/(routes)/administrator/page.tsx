@@ -9,8 +9,6 @@ import { db } from "@/lib/db";
 import { DeletionRequestList } from "./_components/deletion-request-list";
 import { RecentActivities } from "./_components/recent-activities";
 
-/*************  ✨ Codeium Command ⭐  *************/
-/******  7331174a-7c37-4a7b-8e8b-209651f11114  *******/
 const AdministratorPage = async () => {
   const { userId } = auth();
 
