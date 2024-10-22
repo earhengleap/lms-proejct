@@ -8,7 +8,7 @@ const getUserMetrics = async () => {
 
   if (!userId) {
     console.log("User not found");
-    return null;
+    return [];
   }
 
   try {
@@ -23,7 +23,9 @@ const getUserMetrics = async () => {
     const numQuestions = await prisma.question.count({
       where: {
         quiz: {
-          userId: userId
+          user: {
+            userId: userId
+          }
         }
       }
     });
@@ -55,8 +57,8 @@ const getUserMetrics = async () => {
     ];
   } catch (error) {
     console.error("Error fetching user metrics: ", error);
-    return null;
+    return [];
   }
-}
+};
 
 export default getUserMetrics;

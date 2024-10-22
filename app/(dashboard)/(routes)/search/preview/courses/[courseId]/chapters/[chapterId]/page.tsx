@@ -93,65 +93,34 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
   );
 
   return (
-    <div className="flex flex-col max-w-7xl mx-auto pb-20">
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <VideoPlayer
-          chapterId={chapterId}
-          title={chapter.title}
-          courseId={courseId}
-          nextChapterId={nextChapter?.id}
-          playbackId={chapter.muxData?.playbackId!}
-          isLocked={isLocked && !hasPurchased}
-          completedOnEnd={
-            hasPurchased && !!userId && !userProgress?.isCompleted
-          }
-        />
-      </div>
-      <div className="mt-8 px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg p-6 border transition-all duration-300 hover:shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
-              <h3 className="font-bold text-2xl text-gray-800 transition-colors duration-300 hover:text-sky-600 mb-2 sm:mb-0">
-                {chapter.title}
-              </h3>
-              <div className="flex items-center gap-x-2 text-sm text-gray-500">
-                <IconBadge size="sm" icon={BookOpen} />
-                <span>
-                  {chaptersLength}{" "}
-                  {chaptersLength === 1 ? "Chapter" : "Chapters"}
-                </span>
-              </div>
-            </div>
-            <div className="text-md text-gray-600 mb-4 leading-relaxed">
-              <Preview value={chapter.description || ""} />
-            </div>
-            {chapter.course.category && (
-              <div className="inline-block bg-sky-100 text-sky-800 rounded-full px-3 py-1 text-xs font-semibold mr-2 mb-4">
-                {chapter.course.category.name}
-              </div>
-            )}
-            <div className="mt-4">
-              <CourseProgress
-                variant={progress === 100 ? "success" : "default"}
-                size="sm"
-                value={progress}
-              />
-              {!userId && (
-                <p className="text-sm text-gray-500 mt-2 italic">
-                  Sign in to track your progress
-                </p>
-              )}
-            </div>
+    <div className="flex flex-col max-w-7xl mx-auto pb-20 space-y-4 mt-4">
+      {/* Grid for Video and Sidebar */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Video Player Section */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="aspect-video relative">
+            <VideoPlayer
+              chapterId={chapterId}
+              title={chapter.title}
+              courseId={courseId}
+              nextChapterId={nextChapter?.id}
+              playbackId={chapter.muxData?.playbackId!}
+              isLocked={isLocked && !hasPurchased}
+              completedOnEnd={
+                hasPurchased && !!userId && !userProgress?.isCompleted
+              }
+            />
           </div>
         </div>
-        <div className="lg:col-span-1">
+
+        {/* Sidebar Section */}
+        <div className="lg:col-span-1 space-y-4">
           <ChapterIdClient
             chapterId={chapterId}
             courseId={courseId}
             isLocked={isLocked}
             price={price}
             hasPurchased={hasPurchased}
-            progress={progress}
             userProgress={userProgress}
             userId={userId}
             courseTitle={chapter.course.title}
@@ -160,8 +129,47 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
           />
         </div>
       </div>
-      <div className="mt-8 px-4 sm:px-6 lg:px-8 w-full">
-        <div className="bg-white border rounded-md p-6 transition-all duration-300 hover:shadow-sm">
+
+      {/* Chapter Details and Progress Section */}
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 space-y-4">
+        <div className="bg-white rounded-lg p-6 border transition-all duration-300 hover:shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
+            <h3 className="font-bold text-2xl text-gray-800 transition-colors duration-300 hover:text-sky-600 mb-2 sm:mb-0">
+              {chapter.title}
+            </h3>
+            <div className="flex items-center gap-x-2 text-sm text-gray-500">
+              <IconBadge size="sm" icon={BookOpen} />
+              <span>
+                {chaptersLength} {chaptersLength === 1 ? "Chapter" : "Chapters"}
+              </span>
+            </div>
+          </div>
+          <div className="text-md text-gray-600 mb-4 leading-relaxed space-y-4">
+            <Preview value={chapter.course.description || ""} />
+          </div>
+          {chapter.course.category && (
+            <div className="inline-block bg-sky-100 text-sky-800 rounded-full px-3 py-1 text-xs font-semibold mr-2 mb-4">
+              {chapter.course.category.name}
+            </div>
+          )}
+          <div className="mt-4 space-y-4">
+            <CourseProgress
+              variant={progress === 100 ? "success" : "default"}
+              size="sm"
+              value={progress}
+            />
+            {!userId && (
+              <p className="text-sm text-gray-500 mt-2 italic">
+                Sign in to track your progress
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Comments Section */}
+      <div className="mt-8 px-4 sm:px-6 lg:px-8 space-y-4">
+        <div className="bg-white border rounded-md p-6 transition-all duration-300 hover:shadow-sm space-y-4">
           <h2 className="text-2xl font-bold mb-4">Comments</h2>
           <Comments chapterId={chapterId} hasPurchased={hasPurchased} />
         </div>
@@ -171,3 +179,5 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
 };
 
 export default ChapterIdPage;
+
+//OLD CODE

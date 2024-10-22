@@ -8,7 +8,6 @@ import {
   CheckSquare,
   Settings,
   Users,
-  FileText,
   LayoutDashboard,
   GraduationCap,
   MessageSquare,
@@ -42,14 +41,19 @@ const studentRoutes = [
 
 const teacherRoutes = [
   {
+    icon: BarChart,
+    label: "Dashboard",
+    href: "/teacher/analytics",
+  },
+  {
     icon: List,
     label: "Courses",
     href: "/teacher/courses",
   },
   {
-    icon: BarChart,
-    label: "Analytics",
-    href: "/teacher/analytics",
+    icon: CreditCard,
+    label: "Wallet", // New route for instructors to view their revenue/payments
+    href: "/teacher/wallet",
   },
 ];
 

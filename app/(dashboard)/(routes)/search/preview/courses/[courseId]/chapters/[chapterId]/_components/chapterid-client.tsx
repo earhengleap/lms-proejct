@@ -1,5 +1,3 @@
-// app/(dashboard)/(routes)/search/preview/courses/[courseId]/chapters/[chapterId]/_components/chapterid-client.tsx
-
 "use client";
 
 import { useState } from "react";
@@ -10,6 +8,7 @@ import LoginModal from "@/components/login-modal";
 import axios from "axios";
 import { toast } from "sonner";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 interface ChapterIdClientProps {
   chapterId: string;
@@ -17,7 +16,6 @@ interface ChapterIdClientProps {
   isLocked: boolean;
   price: number;
   hasPurchased: boolean;
-  progress: number | null;
   userProgress: any;
   userId: string | null;
   courseTitle: string;
@@ -40,69 +38,58 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
   const [loadingPaymentMethod, setLoadingPaymentMethod] = useState<
     string | null
   >(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    "stripe" | "abapay" | null
+  >(null);
   const router = useRouter();
 
   const handleSignInClick = () => {
     setIsLoginModalOpen(true);
   };
 
-  // Handle Stripe Payment
-  const handleStripePayment = async () => {
+  const handlePayment = async (paymentMethod: "stripe" | "abapay") => {
     try {
       setIsLoading(true);
-      setLoadingPaymentMethod("stripe");
-      const response = await axios.post(`/api/courses/${courseId}/checkout`, {
-        paymentMethod: "stripe",
-      });
-      window.location.href = response.data.url;
-    } catch (error) {
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-      setLoadingPaymentMethod(null);
-    }
-  };
+      setLoadingPaymentMethod(paymentMethod);
 
-  const handleAbaPaywayPayment = async () => {
-    try {
-      setIsLoading(true);
-      setLoadingPaymentMethod("abapay");
+      if (paymentMethod === "stripe") {
+        const response = await axios.post(`/api/courses/${courseId}/checkout`, {
+          paymentMethod: "stripe",
+        });
+        window.location.href = response.data.url;
+      } else {
+        const response = await fetch(
+          `/api/courses/${courseId}/aba-pay-way-checkout`,
+          {
+            method: "POST",
+          }
+        );
 
-      const response = await fetch(
-        `/api/courses/${courseId}/aba-pay-way-checkout`,
-        {
-          method: "POST",
+        if (!response.ok) {
+          throw new Error("Failed to initiate payment");
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Failed to initiate payment");
+        const paymentData = await response.json();
+
+        if (!paymentData.url) {
+          throw new Error("Payment URL missing in the response");
+        }
+
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = paymentData.url;
+
+        Object.keys(paymentData).forEach((key) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = key;
+          input.value = paymentData[key];
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
       }
-
-      const paymentData = await response.json();
-
-      // Check if the payment URL is returned
-      if (!paymentData.url) {
-        throw new Error("Payment URL missing in the response");
-      }
-
-      // Dynamically create the form and submit it to ABA PayWay
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = paymentData.url;
-
-      // Add hidden inputs based on the paymentData returned from the server
-      Object.keys(paymentData).forEach((key) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = key;
-        input.value = paymentData[key];
-        form.appendChild(input);
-      });
-
-      // Append the form to the body and submit it
-      document.body.appendChild(form);
-      form.submit();
     } catch (error) {
       console.error("Payment failed:", error);
       toast.error("Something went wrong. Please try again.");
@@ -112,8 +99,45 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
     }
   };
 
-  // Function to handle the button content with payment method and price
-  const buttonContent = (paymentMethod: "stripe" | "abapay") => {
+  const PaymentOption = ({
+    method,
+    icon,
+    label,
+  }: {
+    method: "stripe" | "abapay";
+    icon: React.ReactNode;
+    label: string;
+  }) => (
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      className={`flex items-center p-3 border rounded-md cursor-pointer transition-all duration-300 ${
+        selectedPaymentMethod === method
+          ? "border-blue-500 bg-blue-50"
+          : "border-gray-200 hover:border-blue-300"
+      }`}
+      onClick={() => setSelectedPaymentMethod(method)}
+    >
+      <div className="flex-shrink-0 mr-3">{icon}</div>
+      <div className="flex-grow">
+        <h4 className="font-medium text-sm text-gray-700">{label}</h4>
+      </div>
+      <div className="flex-shrink-0 ml-2">
+        <div
+          className={`w-4 h-4 rounded-full border ${
+            selectedPaymentMethod === method
+              ? "border-blue-500 bg-blue-500"
+              : "border-gray-300"
+          }`}
+        >
+          {selectedPaymentMethod === method && (
+            <div className="w-2 h-2 bg-white rounded-full m-[3px]" />
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+
+  const buttonContent = () => {
     if (!userId) {
       return (
         <>
@@ -135,62 +159,115 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
         </>
       );
     }
-    return (
+    return isLoading ? (
+      "Processing..."
+    ) : (
       <>
-        {paymentMethod === "stripe" ? (
+        {selectedPaymentMethod === "stripe" ? (
           <CreditCard className="h-5 w-5 mr-2" />
         ) : (
           <ShoppingCart className="h-5 w-5 mr-2" />
         )}
-        {isLoading && loadingPaymentMethod === paymentMethod
-          ? "Processing..."
-          : `Enroll with ${
-              paymentMethod === "stripe" ? "Stripe" : "ABA PayWay"
-            } ${price.toFixed(2)} USD`}
+        Enroll Now • ${price.toFixed(2)}
       </>
     );
   };
 
-  return (
-    <div className="w-full space-y-4 animate-slideIn">
-      <div className="rounded-lg overflow-hidden transition-all duration-300 hover:shadow-sm">
-        <div className="bg-gradient-to-br from-[#4FACFE] to-[#00F2FE] p-6 text-white border">
-          <h2 className="font-bold text-2xl mb-3 transition-transform duration-300 hover:translate-x-1">
-            {isFirstChapter
-              ? "Watch the First Chapter Free!"
-              : "Ready to start learning?"}
-          </h2>
-          <p className="text-sm mb-6 text-sky-100">
-            {isFirstChapter
-              ? "Enjoy the first chapter and decide if this course is right for you."
-              : "Track your progress, watch with subtitles, change quality & speed, and more."}
-          </p>
+  // Text animation
+  const textVariants = {
+    hidden: { opacity: 0 },
+    visible: (i = 0) => ({
+      opacity: 1,
+      transition: { delay: i * 0.1, duration: 0.5 },
+    }),
+  };
 
-          {userId && hasPurchased ? (
-            <Link href={`/courses/${courseId}/chapters/${chapterId}`} passHref>
-              <Button className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]">
-                {buttonContent("stripe")}
-              </Button>
-            </Link>
-          ) : (
-            <div className="space-y-2">
-              <Button
-                className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
-                onClick={userId ? handleStripePayment : handleSignInClick}
-                disabled={isLoading}
-              >
-                {buttonContent("stripe")}
-              </Button>
-              <Button
-                className="w-full bg-white text-sky-600 font-semibold py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 hover:bg-sky-50 hover:translate-y-[-2px]"
-                onClick={userId ? handleAbaPaywayPayment : handleSignInClick}
-                disabled={isLoading}
-              >
-                {buttonContent("abapay")}
-              </Button>
+  const description = isFirstChapter
+    ? "Get a taste of the course content for free."
+    : "Track your progress, watch with subtitles, change quality & speed, and more.";
+  const words = description.split(" ");
+
+  return (
+    <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg p-6 border border-gray-200 shadow-lg flex flex-col h-full">
+      <h2 className="font-bold text-2xl mb-4 text-gray-800">
+        {isFirstChapter ? "Preview First Chapter" : "Ready to Learn?"}
+      </h2>
+
+      {/* Animated Description Text */}
+      <div className="mb-6 text-sm leading-relaxed overflow-hidden">
+        {words.map((word, i) => (
+          <motion.span
+            key={i}
+            custom={i}
+            variants={textVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ display: "inline-block", marginRight: "4px" }}
+          >
+            {word}
+          </motion.span>
+        ))}
+      </div>
+
+      {/* Language Learning Quote */}
+      <div className="p-4 bg-blue-100 rounded-lg mb-6 text-center">
+        <p className="text-sm italic text-blue-800">
+          &quot;Learn everything you can, anytime you can, from anyone you can;
+          there will always come a time when you will be grateful you did.&quot;
+        </p>
+      </div>
+
+      <div className="flex-grow flex flex-col justify-end">
+        {!userId ? (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 shadow-md"
+            onClick={handleSignInClick}
+          >
+            {buttonContent()}
+          </motion.button>
+        ) : hasPurchased ? (
+          <Link href={`/courses/${courseId}/chapters/${chapterId}`} passHref>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-medium py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 shadow-md"
+            >
+              {buttonContent()}
+            </motion.button>
+          </Link>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-col space-y-2">
+              <PaymentOption
+                method="stripe"
+                icon={<CreditCard className="h-5 w-5 text-blue-500" />}
+                label="Credit Card"
+              />
+              <PaymentOption
+                method="abapay"
+                icon={<ShoppingCart className="h-5 w-5 text-orange-500" />}
+                label="ABA PayWay"
+              />
             </div>
-          )}
-        </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`w-full font-medium py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 shadow-md ${
+                isLoading || !selectedPaymentMethod
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
+              }`}
+              onClick={() =>
+                selectedPaymentMethod && handlePayment(selectedPaymentMethod)
+              }
+              disabled={isLoading || !selectedPaymentMethod}
+            >
+              {buttonContent()}
+            </motion.button>
+          </div>
+        )}
       </div>
 
       <LoginModal
@@ -203,4 +280,4 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 
 export default ChapterIdClient;
 
-//NEW CODE TAHT CAN WORK WITH ABA PAYWAY
+//OLD

@@ -9,13 +9,19 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// New Publisher model
 model Publisher {
-  id        String   @id @default(uuid())
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  courses   Course[] // One-to-many relationship with Course
+  id               String     @id @default(uuid())
+  name             String? // Name of the publisher or instructor
+  totalRevenue     Float      @default(0.0) // All-time earnings
+  withdrawnRevenue Float      @default(0.0) // Revenue already paid out
+  royalty          Float      @default(0.0) // Portion of revenue paid to the administrator
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  courses          Course[] // One-to-many relationship with Course
+  purchases        Purchase[] // Purchases linked to this publisher
+  Wallet           Wallet?
+
+  @@index([id])
 }
 
 model User {
@@ -123,21 +129,23 @@ model UserProgress {
 }
 
 model Purchase {
-  id            String   @id @default(uuid())
+  id            String     @id @default(uuid())
   userId        String
   courseId      String
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @default(now())
-  amount        Float    // Add the payment amount
-  transactionId String   // Add transaction ID
-  paymentStatus String   // Store status as "completed"
-  paymentMethod String   // e.g., "abapay"
-  course        Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now())
+  amount        Float // Payment amount for the course
+  transactionId String // Transaction ID from payment gateway
+  paymentStatus String // Store status as "completed"
+  paymentMethod String // Payment method, e.g., "abapay"
+  royaltyAmount Float // The royalty deducted (10% of amount)
+  course        Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  publisher     Publisher? @relation(fields: [publisherId], references: [id])
+  publisherId   String?
 
   @@unique([userId, courseId])
   @@index([courseId])
 }
-
 
 model StripeCustomer {
   id               String   @id @default(uuid())
@@ -276,4 +284,21 @@ model Activity {
   userId      String? // The user who performed the action
   itemId      String? // The ID of the related item (course or chapter)
   itemType    String? // "course" or "chapter"
+}
+
+//OLD CODE
+
+model Wallet {
+  id               String    @id @default(uuid())
+  publisherId      String    @unique
+  totalRevenue     Float     @default(0.0)
+  withdrawnRevenue Float     @default(0.0)
+  royalty          Float     @default(0.0)
+  availableBalance Float     @default(0.0)
+  pendingBalance   Float     @default(0.0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  publisher        Publisher @relation(fields: [publisherId], references: [id])
+
+  @@index([publisherId])
 }

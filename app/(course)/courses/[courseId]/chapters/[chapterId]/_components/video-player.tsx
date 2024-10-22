@@ -61,15 +61,12 @@ export const VideoPlayer = ({
   };
 
   return (
-    <div
-      className="relative w-full overflow-hidden rounded-md shadow-lg"
-      style={{ paddingTop: "56.25%" }}
-    >
+    <div className="relative w-full overflow-hidden rounded-md shadow-lg">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="absolute inset-0"
+        className="relative w-full h-0 pb-[56.25%]" // Maintain 16:9 ratio using padding-bottom
       >
         {!isReady && !isLocked && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
@@ -87,7 +84,10 @@ export const VideoPlayer = ({
         {!isLocked && playbackId && (
           <MuxPlayer
             title={title}
-            className={cn("absolute inset-0", !isReady && "hidden")}
+            className={cn(
+              "absolute inset-0 w-full h-full",
+              !isReady && "hidden"
+            )}
             onCanPlay={() => setIsReady(true)}
             onEnded={onEnd}
             autoPlay

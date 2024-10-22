@@ -97,6 +97,9 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     const isPaymentSuccessful = true;
 
     if (isPaymentSuccessful) {
+      // Assuming the royalty amount is 10% of the course price
+      const royaltyAmount = parseFloat(amount) * 0.10; // 10% royalty
+
       // Create a purchase record in the database
       await db.purchase.create({
         data: {
@@ -106,6 +109,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
           transactionId: transactionId,
           paymentStatus: "completed", // Mark payment as completed
           paymentMethod: "abapay",    // Payment method as ABA PayWay
+          royaltyAmount: royaltyAmount, // Set the royalty amount
         },
       });
 
@@ -144,4 +148,4 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
   }
 }
 
-//NEW CODE THAT CAN WORK WITH ABA PAYWAY
+//OLD CODE
