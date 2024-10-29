@@ -1,3 +1,5 @@
+//app/(dashboard)/(routes)/teacher/analytics/page.tsx
+
 import React from "react";
 import { getAnalytics } from "@/actions/get-analytics";
 import { auth } from "@clerk/nextjs/server";

@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/teacher/analytics/_components/data-card.tsx
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatPrice } from "@/lib/format";
@@ -9,7 +11,7 @@ interface DataCardProps {
   shouldFormat?: boolean;
   format?: (value: number) => string;
   description?: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactNode; 
   trend?: number;
   color?: string;
 }
@@ -56,3 +58,6 @@ export const DataCard: React.FC<DataCardProps> = ({
     </Card>
   );
 };
+
+
+//OLD CODE

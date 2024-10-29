@@ -8,7 +8,17 @@ interface MonthlyData {
 }
 
 export const getAnalytics = async (userId: string) => {
-  const [purchases, courseCompletionRates, studentDemographics] = await Promise.all([
+  // First get the publisher ID for this user
+  const publisher = await db.publisher.findFirst({
+    where: { courses: { some: { userId } } },
+    select: { id: true },
+  });
+
+  if (!publisher) {
+    throw new Error("Publisher not found");
+  }
+
+  const [purchases, courseCompletionRates, studentDemographics, withdrawalData] = await Promise.all([
     db.purchase.findMany({
       where: {
         course: {
@@ -16,7 +26,8 @@ export const getAnalytics = async (userId: string) => {
         },
       },
       select: {
-        amount: true, // This will contain the original price
+        amount: true,
+        royaltyAmount: true,
         createdAt: true,
         course: {
           select: {
@@ -49,8 +60,23 @@ export const getAnalytics = async (userId: string) => {
       },
       _count: true,
     }),
+    // Add withdrawal data fetching
+    db.withdrawalRequest.findMany({
+      where: {
+        publisherId: publisher.id,
+        status: 'completed', // Only get completed withdrawals
+      },
+      select: {
+        amount: true,
+        createdAt: true,
+      },
+    }),
   ]);
 
+  // Calculate withdrawal revenue
+  const withdrawnRevenue = withdrawalData.reduce((sum, withdrawal) => sum + withdrawal.amount, 0);
+
+  // Monthly aggregates calculation including withdrawals
   const monthlyAggregates: MonthlyData[] = purchases.reduce(
     (acc: MonthlyData[], purchase) => {
       const month = purchase.createdAt.getMonth();
@@ -63,12 +89,21 @@ export const getAnalytics = async (userId: string) => {
         (acc[month].courses[courseTitle] || 0) + purchase.amount;
       return acc;
     },
-    Array(12).fill(null).map(() => ({ total: 0, courses: {} })),
+    Array(12).fill(null).map(() => ({ total: 0, courses: {} }))
   );
 
-  const totalRevenue = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
+  // Calculate monthly withdrawals
+  withdrawalData.forEach(withdrawal => {
+    const month = withdrawal.createdAt.getMonth();
+    if (!monthlyAggregates[month]) {
+      monthlyAggregates[month] = { total: 0, courses: {} };
+    }
+    // Subtract withdrawal from monthly total
+    monthlyAggregates[month].total -= withdrawal.amount;
+  });
 
-  const royalty = totalRevenue * 0.1;
+  const totalRevenue = purchases.reduce((sum, purchase) => sum + purchase.amount, 0);
+  const royalty = purchases.reduce((sum, purchase) => sum + purchase.royaltyAmount, 0);
   const instructorRevenue = totalRevenue - royalty;
 
   const completionRates = courseCompletionRates.map((course) => {
@@ -76,7 +111,7 @@ export const getAnalytics = async (userId: string) => {
     const totalChapters = course.chapters.length || 1;
     const totalProgress = course.chapters.reduce(
       (acc, chapter) => acc + chapter.userProgress.length,
-      0,
+      0
     );
 
     return {
@@ -95,26 +130,28 @@ export const getAnalytics = async (userId: string) => {
         category: user?.isInstructor ? 'Instructors' : 'Students',
         count: group._count,
       };
-    }),
+    })
   );
 
-  return {
-    data: monthlyAggregates.map((month, index) => ({
-      name: `Month ${index + 1}`,
-      total: month.total,
-      courses: Object.entries(month.courses).map(([title, price]) => ({
-        title,
-        price: Number(price),
-      })),
+  // Add withdrawal transactions to monthly data
+  const monthlyData = monthlyAggregates.map((month, index) => ({
+    name: `Month ${index + 1}`,
+    total: month.total,
+    courses: Object.entries(month.courses).map(([title, price]) => ({
+      title,
+      price: Number(price),
     })),
-    totalRevenue, // Original price of all purchases (before royalty)
-    instructorRevenue, // Revenue after royalty deduction
+  }));
+
+  return {
+    data: monthlyData,
+    totalRevenue,
+    instructorRevenue,
     totalSales: purchases.length,
     completionRates,
     studentDemographics: formattedDemographics,
-    withdrawnRevenue: 0,
-    royalty: royalty,
+    withdrawnRevenue, // Now matches wallet's withdrawn revenue
+    royalty,
+    availableBalance: instructorRevenue - withdrawnRevenue, // Add available balance
   };
 };
-
-//OLD CODE

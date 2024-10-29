@@ -1,14 +1,14 @@
+// ChapterIdClient.tsx
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Play, ArrowRight, ShoppingCart, CreditCard } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import LoginModal from "@/components/login-modal";
-import axios from "axios";
-import { toast } from "sonner";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import StripePaymentButton from "./stripe-payment-button";
+import ABAPaymentButton from "./aba-payment-button";
 
 interface ChapterIdClientProps {
   chapterId: string;
@@ -35,9 +35,6 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 }) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [loadingPaymentMethod, setLoadingPaymentMethod] = useState<
-    string | null
-  >(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     "stripe" | "abapay" | null
   >(null);
@@ -45,58 +42,6 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 
   const handleSignInClick = () => {
     setIsLoginModalOpen(true);
-  };
-
-  const handlePayment = async (paymentMethod: "stripe" | "abapay") => {
-    try {
-      setIsLoading(true);
-      setLoadingPaymentMethod(paymentMethod);
-
-      if (paymentMethod === "stripe") {
-        const response = await axios.post(`/api/courses/${courseId}/checkout`, {
-          paymentMethod: "stripe",
-        });
-        window.location.href = response.data.url;
-      } else {
-        const response = await fetch(
-          `/api/courses/${courseId}/aba-pay-way-checkout`,
-          {
-            method: "POST",
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to initiate payment");
-        }
-
-        const paymentData = await response.json();
-
-        if (!paymentData.url) {
-          throw new Error("Payment URL missing in the response");
-        }
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = paymentData.url;
-
-        Object.keys(paymentData).forEach((key) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = key;
-          input.value = paymentData[key];
-          form.appendChild(input);
-        });
-
-        document.body.appendChild(form);
-        form.submit();
-      }
-    } catch (error) {
-      console.error("Payment failed:", error);
-      toast.error("Something went wrong. Please try again.");
-    } finally {
-      setIsLoading(false);
-      setLoadingPaymentMethod(null);
-    }
   };
 
   const PaymentOption = ({
@@ -251,21 +196,22 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
                 label="ABA PayWay"
               />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`w-full font-medium py-3 px-4 rounded-md flex items-center justify-center transition-all duration-300 shadow-md ${
-                isLoading || !selectedPaymentMethod
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-gradient-to-r from-blue-500 to-blue-600 text-white"
-              }`}
-              onClick={() =>
-                selectedPaymentMethod && handlePayment(selectedPaymentMethod)
-              }
-              disabled={isLoading || !selectedPaymentMethod}
-            >
-              {buttonContent()}
-            </motion.button>
+            {selectedPaymentMethod === "stripe" && (
+              <StripePaymentButton
+                courseId={courseId}
+                price={price}
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+              />
+            )}
+            {selectedPaymentMethod === "abapay" && (
+              <ABAPaymentButton
+                courseId={courseId}
+                price={price}
+                isLoading={isLoading}
+                setIsLoading={setIsLoading}
+              />
+            )}
           </div>
         )}
       </div>
@@ -279,5 +225,3 @@ const ChapterIdClient: React.FC<ChapterIdClientProps> = ({
 };
 
 export default ChapterIdClient;
-
-//OLD

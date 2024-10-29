@@ -1,6 +1,5 @@
 //app/(dashboard)/(routes)/teacher/wallet/page.tsx
 
-
 import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
@@ -24,6 +23,7 @@ import {
 } from "lucide-react";
 import { DataCard } from "../analytics/_components/data-card";
 import { getWalletData } from "@/actions/get-wallet-data";
+import WithdrawalDialog from "./_components/withdrawl-dialog";
 
 const WalletPage = async () => {
   const { userId } = auth();
@@ -40,6 +40,7 @@ const WalletPage = async () => {
     pendingBalance,
     withdrawnRevenue,
     transactions,
+    publisherId, // Add this to your getWalletData return type
   } = await getWalletData(userId);
 
   return (
@@ -103,14 +104,14 @@ const WalletPage = async () => {
           Withdrawal Options
         </h2>
         <div className="flex space-x-4">
-          <Button className="flex items-center">
-            <ArrowDownToLine className="h-4 w-4 mr-2" />
-            Withdraw to Bank Account
-          </Button>
-          <Button variant="outline" className="flex items-center">
+          <WithdrawalDialog
+            availableBalance={availableBalance}
+            publisherId={publisherId}
+          />
+          {/* <Button variant="outline" className="flex items-center">
             <CreditCard className="h-4 w-4 mr-2" />
             Withdraw to PayPal
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -149,3 +150,5 @@ const WalletPage = async () => {
 };
 
 export default WalletPage;
+
+//OLD CODE

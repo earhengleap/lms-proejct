@@ -54,7 +54,7 @@ export async function POST(req: Request, { params }: { params: { courseId: strin
     const return_params = "imxing";
     const type = "purchase";
     const currency = "USD";
-    const payment_option = "cards";
+    const payment_option = "abapay";
     const shipping = "0.00"; // Shipping cost is set to 0.00
 
     // Return URLs

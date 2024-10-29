@@ -9,17 +9,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WithdrawalRequest {
+  id            String      @id @default(uuid())
+  publisherId   String
+  bankAccountId String
+  amount        Float
+  status        String      @default("pending")
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  publisher     Publisher   @relation(fields: [publisherId], references: [id])
+  bankAccount   BankAccount @relation(fields: [bankAccountId], references: [id])
+  adminNote     String?
+  processedAt   DateTime?
+
+  @@index([publisherId])
+  @@index([status])
+}
+
+model BankAccount {
+  id                 String              @id @default(uuid())
+  publisherId        String
+  bankName           String
+  accountName        String
+  accountNumber      String
+  isDefault          Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  publisher          Publisher           @relation(fields: [publisherId], references: [id])
+  qrCodeUrl          String? // Add this field
+  withdrawalRequests WithdrawalRequest[]
+
+  @@index([publisherId])
+}
+
 model Publisher {
-  id               String     @id @default(uuid())
-  name             String? // Name of the publisher or instructor
-  totalRevenue     Float      @default(0.0) // All-time earnings
-  withdrawnRevenue Float      @default(0.0) // Revenue already paid out
-  royalty          Float      @default(0.0) // Portion of revenue paid to the administrator
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  courses          Course[] // One-to-many relationship with Course
-  purchases        Purchase[] // Purchases linked to this publisher
-  Wallet           Wallet?
+  id                 String              @id @default(uuid())
+  name               String?
+  totalRevenue       Float               @default(0.0)
+  withdrawnRevenue   Float               @default(0.0)
+  royalty            Float               @default(0.0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  courses            Course[]
+  purchases          Purchase[]
+  wallet             Wallet?
+  bankAccounts       BankAccount[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@index([id])
 }
@@ -135,7 +170,7 @@ model Purchase {
   createdAt     DateTime   @default(now())
   updatedAt     DateTime   @default(now())
   amount        Float // Payment amount for the course
-  transactionId String // Transaction ID from payment gateway
+  transactionId String     @unique
   paymentStatus String // Store status as "completed"
   paymentMethod String // Payment method, e.g., "abapay"
   royaltyAmount Float // The royalty deducted (10% of amount)

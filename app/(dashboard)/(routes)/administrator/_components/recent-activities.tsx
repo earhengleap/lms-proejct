@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +13,15 @@ import {
 } from "@/components/ui/select";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import { Trash2, Activity, RefreshCw } from "lucide-react";
+import {
+  Trash2,
+  Activity,
+  RefreshCw,
+  Clock,
+  User,
+  Book,
+  BookOpen,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Activity {
@@ -28,14 +35,59 @@ interface Activity {
   itemType: string | null;
 }
 
+const TIME_PERIODS = {
+  "7days": "Last 7 days",
+  "30days": "Last 30 days",
+  "3months": "Last 3 months",
+} as const;
+
+const ACTIVITY_COLORS = {
+  "Deletion Request": {
+    bg: "bg-red-50",
+    text: "text-red-800",
+    border: "border-red-200",
+    icon: Trash2,
+  },
+  "Deletion Request Action": {
+    bg: "bg-yellow-50",
+    text: "text-yellow-800",
+    border: "border-yellow-200",
+    icon: Activity,
+  },
+  "Course Creation": {
+    bg: "bg-green-50",
+    text: "text-green-800",
+    border: "border-green-200",
+    icon: Book,
+  },
+  "User Registration": {
+    bg: "bg-blue-50",
+    text: "text-blue-800",
+    border: "border-blue-200",
+    icon: User,
+  },
+  "Course Publication": {
+    bg: "bg-purple-50",
+    text: "text-purple-800",
+    border: "border-purple-200",
+    icon: BookOpen,
+  },
+} as const;
+
 export const RecentActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [period, setPeriod] = useState("7days");
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    console.log("Loading state:", isLoading);
+  }, [isLoading]);
+
   const fetchActivities = useCallback(async () => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      // Add artificial delay to test loading state
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       const response = await axios.get(
         `/api/admin/activities?period=${period}`
       );
@@ -58,146 +110,187 @@ export const RecentActivities = () => {
     try {
       await axios.delete("/api/admin/activities");
       setActivities([]);
-      toast.success("Recent activities cleared successfully");
+      toast.success("Activities cleared successfully");
     } catch (error) {
-      console.error("Failed to clear recent activities:", error);
-      toast.error("Failed to clear recent activities");
+      console.error("Failed to clear activities:", error);
+      toast.error("Failed to clear activities");
     }
   };
 
   return (
-    <Card className="p-6 shadow-md">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 space-y-4 sm:space-y-0">
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 flex items-center">
-          <Activity className="w-6 h-6 mr-2 text-blue-500" />
-          Recent Activities
-        </h2>
+    <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className="p-4 border-b border-gray-100 flex-shrink-0">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
+                <Activity className="w-5 h-5 text-blue-600" />
+              </div>
+              <h2 className="text-lg font-semibold text-gray-800">
+                Activities
+              </h2>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Clock className="w-3.5 h-3.5" />
+              <span>Real-time</span>
+            </div>
+          </div>
 
-        {/* Adjust the wrapping of Select and Buttons */}
-        <div className="flex flex-col sm:flex-row w-full sm:w-auto items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-          <Select
-            value={period}
-            onValueChange={(value) => {
-              setPeriod(value);
-              fetchActivities();
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-auto text-sm sm:text-base">
-              <SelectValue placeholder="Select period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7days">Last 7 days</SelectItem>
-              <SelectItem value="30days">Last 30 days</SelectItem>
-              <SelectItem value="3months">Last 3 months</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between gap-2">
+            <Select value={period} onValueChange={(value) => setPeriod(value)}>
+              <SelectTrigger className="w-[140px] h-8 text-sm bg-gray-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(TIME_PERIODS).map(([value, label]) => (
+                  <SelectItem key={value} value={value} className="text-sm">
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          {/* Buttons wrapped in responsive layout */}
-          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
-            <Button
-              onClick={fetchActivities}
-              size="sm"
-              variant="outline"
-              className="w-full sm:w-auto transition-colors duration-300 ease-in-out hover:bg-blue-100 hover:text-blue-700 text-sm sm:text-base"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Refresh
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchActivities}
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+              >
+                <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                Refresh
+              </Button>
 
-            <Button
-              onClick={handleClear}
-              size="sm"
-              variant="destructive"
-              disabled={activities.length === 0 || isLoading}
-              className="w-full sm:w-auto transition-colors duration-300 ease-in-out hover:bg-red-700 text-sm sm:text-base"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Clear
-            </Button>
+              <Button
+                onClick={handleClear}
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                disabled={activities.length === 0 || isLoading}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                Clear
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-      <AnimatePresence>
+
+      <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="flex justify-center items-center h-64"
-          >
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-          </motion.div>
+          <LoadingState />
         ) : activities.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-center py-8 text-gray-500"
-          >
-            No recent activities to display.
-          </motion.div>
+          <EmptyState />
         ) : (
-          <ul className="space-y-4">
-            <AnimatePresence>
-              {activities.map((activity) => (
-                <motion.li
-                  key={activity.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 ease-in-out"
-                >
-                  <div className="mb-2 sm:mb-0 sm:mr-4">
-                    <p className="text-sm sm:text-base font-medium text-gray-800">
-                      {activity.description}
-                    </p>
-                    {activity.publisherName && (
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        By: {activity.publisherName}
-                      </p>
-                    )}
-                    {activity.courseName && (
-                      <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                        {activity.itemType === "chapter"
-                          ? `Chapter: ${activity.chapterName} in Course: ${activity.courseName}`
-                          : `Course: ${activity.courseName}`}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-start sm:items-end space-y-2">
-                    <ActivityBadge type={activity.type} />
-                    <span className="text-xs text-gray-500">
-                      {formatDistanceToNow(new Date(activity.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </div>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ul>
+          <ActivityList activities={activities} />
         )}
-      </AnimatePresence>
-    </Card>
+      </div>
+    </div>
   );
 };
 
-const ActivityBadge = ({ type }: { type: string }) => {
-  const colors = {
-    "Deletion Request": "bg-red-100 text-red-800",
-    "Deletion Request Action": "bg-yellow-100 text-yellow-800",
-    "Course Creation": "bg-green-100 text-green-800",
-    "User Registration": "bg-blue-100 text-blue-800",
-    "Course Publication": "bg-purple-100 text-purple-800",
+const LoadingState = () => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="flex justify-center items-center h-[400px]"
+  >
+    <div
+      className="w-12 h-12 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"
+      style={{ animationDuration: "1s" }}
+    />
+  </motion.div>
+);
+
+const EmptyState = () => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="flex flex-col items-center justify-center h-48 gap-3"
+  >
+    <div className="p-3 rounded-full bg-gray-50">
+      <Activity className="w-6 h-6 text-gray-400" />
+    </div>
+    <p className="text-sm text-gray-500">No activities to display</p>
+  </motion.div>
+);
+
+const ActivityList = ({ activities }: { activities: Activity[] }) => (
+  <ul className="p-4 space-y-3">
+    <AnimatePresence initial={false}>
+      {activities.map((activity) => (
+        <ActivityItem key={activity.id} activity={activity} />
+      ))}
+    </AnimatePresence>
+  </ul>
+);
+
+const ActivityItem = ({ activity }: { activity: Activity }) => {
+  const activityConfig = ACTIVITY_COLORS[
+    activity.type as keyof typeof ACTIVITY_COLORS
+  ] || {
+    bg: "bg-gray-50",
+    text: "text-gray-800",
+    border: "border-gray-200",
+    icon: Activity,
   };
+
+  const IconComponent = activityConfig.icon;
+
   return (
-    <Badge
-      className={`${
-        colors[type as keyof typeof colors] || "bg-gray-100 text-gray-800"
-      } px-2 py-1 text-xs`}
+    <motion.li
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={`${activityConfig.bg} rounded-lg p-3 border ${activityConfig.border} transition-all duration-200`}
     >
-      {type}
-    </Badge>
+      <div className="flex items-start gap-3">
+        <div className={`p-2 rounded-full ${activityConfig.bg}`}>
+          <IconComponent className={`w-4 h-4 ${activityConfig.text}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-800 mb-1">
+            {activity.description}
+          </p>
+          <ActivityDetails activity={activity} />
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <Badge
+            className={`${activityConfig.bg} ${activityConfig.text} border ${activityConfig.border} px-2 py-0.5 text-xs`}
+          >
+            {activity.type}
+          </Badge>
+          <time className="text-xs text-gray-500 flex items-center gap-1">
+            <Clock className="w-3 h-3" />
+            {formatDistanceToNow(new Date(activity.createdAt), {
+              addSuffix: true,
+            })}
+          </time>
+        </div>
+      </div>
+    </motion.li>
   );
 };
+
+const ActivityDetails = ({ activity }: { activity: Activity }) => (
+  <div className="space-y-1">
+    {activity.publisherName && (
+      <DetailItem label="Author" value={activity.publisherName} />
+    )}
+    {activity.courseName && (
+      <DetailItem label="Course" value={activity.courseName} />
+    )}
+    {activity.chapterName && (
+      <DetailItem label="Chapter" value={activity.chapterName} />
+    )}
+  </div>
+);
+
+const DetailItem = ({ label, value }: { label: string; value: string }) => (
+  <p className="text-xs text-gray-600 flex items-center gap-2">
+    <span className="text-gray-500">{label}:</span>
+    <span className="truncate">{value}</span>
+  </p>
+);
