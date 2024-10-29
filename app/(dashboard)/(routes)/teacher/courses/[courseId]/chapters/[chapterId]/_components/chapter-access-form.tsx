@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/form";
 
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { Pencil, Router } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -42,6 +42,26 @@ const ChapterAccessForm = ({
 }: ChapterAccessFormProps) => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
+  const [isFirstChapter, setIsFirstChapter] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkChapterPosition = async () => {
+      try {
+        const response = await axios.get(`/api/courses/${courseId}/chapters`);
+        const chapters = response.data;
+        // Check if current chapter is the first one in the list
+        const isFirst = chapters[0]?.id === chapterId;
+        setIsFirstChapter(isFirst);
+      } catch (error) {
+        toast.error("Something went wrong while checking chapter position");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkChapterPosition();
+  }, [courseId, chapterId]);
 
   const toggleEdit = () => setIsEditing((current) => !current);
 
@@ -60,7 +80,7 @@ const ChapterAccessForm = ({
         `/api/courses/${courseId}/chapters/${chapterId}`,
         values
       );
-      toast.success("Chapter updated.");
+      toast.success("Chapter updated");
       toggleEdit();
       router.refresh();
     } catch (error) {
@@ -68,11 +88,17 @@ const ChapterAccessForm = ({
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="mt-6 border bg-slate-100 rounded-md p-4">Loading...</div>
+    );
+  }
+
   return (
     <div className="mt-6 border bg-slate-100 rounded-md p-4">
       <div className="font-medium flex items-center justify-between">
         Chapter access
-        <Button onClick={toggleEdit} variant={"ghost"}>
+        <Button onClick={toggleEdit} variant="ghost">
           {isEditing ? (
             <>Cancel</>
           ) : (
@@ -91,7 +117,11 @@ const ChapterAccessForm = ({
           )}
         >
           {initialData.isFree ? (
-            <>This chapter is free for preview.</>
+            isFirstChapter ? (
+              <>This is the first chapter and is set as free for preview.</>
+            ) : (
+              <>This chapter is free for preview.</>
+            )
           ) : (
             <>This chapter is not free.</>
           )}
@@ -116,8 +146,9 @@ const ChapterAccessForm = ({
                   </FormControl>
                   <div className="space-y-1 leading-none">
                     <FormDescription>
-                      Check this box if you want to make this chapter free for
-                      preview
+                      {isFirstChapter
+                        ? "First chapter is set as free by default but can be changed"
+                        : "Check this box if you want to make this chapter free for preview"}
                     </FormDescription>
                   </div>
                 </FormItem>

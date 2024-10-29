@@ -1,3 +1,5 @@
+//app/(dashboard)/(routes)/search/preview/courses/[courseId]/page.tsx
+
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 

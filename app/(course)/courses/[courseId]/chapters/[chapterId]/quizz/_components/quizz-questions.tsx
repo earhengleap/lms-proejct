@@ -1,8 +1,10 @@
+// app/(course)/courses/[courseId]/chapters/[chapterId]/quizz/_components/quizz-questions.tsx
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, X } from "lucide-react";
+import { ChevronLeft, X, Loader2 } from "lucide-react";
 import QuizzProgressBar from "./quizz-progress-bar";
 import QuizzResultCard from "./quizz-result-card";
 import QuizzSubmission from "./quizz-submission";
@@ -26,9 +28,10 @@ type Props = {
 
 const QuizzQuestions = ({ quizz, userId }: Props) => {
   const router = useRouter();
-  const { questions, chapterId, courseId } = quizz;
+  const { questions = [], chapterId, courseId } = quizz;
   const [started, setStarted] = useState<boolean>(false);
   const [currentQuestion, setCurrentQuestion] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [userAnswers, setUserAnswers] = useState<
     {
       questionId: number;
@@ -39,6 +42,13 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   const createNotification = useMutation(api.notifications.createNotification);
+
+  useEffect(() => {
+    // Verify quiz data is valid
+    if (quizz && questions.length > 0) {
+      setIsLoading(false);
+    }
+  }, [quizz, questions]);
 
   const calculateScore = () => {
     const correctAnswers = userAnswers.filter(
@@ -105,11 +115,32 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
     router.push("/");
   };
 
-  const currentAnswer = userAnswers.find(
-    (answer) => answer.questionId === questions[currentQuestion].id
-  );
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <p className="mt-2 text-sm text-gray-600">Loading quiz...</p>
+      </div>
+    );
+  }
 
-  const isAnswerSelected = currentAnswer !== undefined;
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="flex flex-col h-full items-center justify-center bg-gray-50">
+        <div className="text-center p-6 bg-white rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            No Questions Available
+          </h2>
+          <p className="text-gray-600 mb-4">
+            This quiz doesn't have any questions yet.
+          </p>
+          <Button onClick={handleExit} variant="outline">
+            Return to Dashboard
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -121,6 +152,12 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
       />
     );
   }
+
+  const currentQuestionData = questions[currentQuestion];
+  const currentAnswer = userAnswers.find(
+    (answer) => answer.questionId === currentQuestionData?.id
+  );
+  const isAnswerSelected = currentAnswer !== undefined;
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
@@ -148,17 +185,27 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
       <main className="flex-1 flex flex-col justify-center items-center p-4">
         <div className="w-full max-w-3xl">
           {!started ? (
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-6">Welcome to the Quiz</h1>
-              <p className="text-lg mb-8">Are you ready to begin?</p>
+            <div className="text-center bg-white p-8 rounded-lg shadow-md">
+              <h1 className="text-3xl font-bold mb-6">
+                {quizz.name || "Welcome to the Quiz"}
+              </h1>
+              <p className="text-lg mb-4 text-gray-600">
+                This quiz contains {questions.length} questions.
+              </p>
+              <p className="text-sm text-gray-500 mb-8">
+                Take your time and answer each question carefully.
+              </p>
             </div>
           ) : (
             <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="mb-4 text-sm text-gray-500 text-right">
+                Question {currentQuestion + 1} of {questions.length}
+              </div>
               <h2 className="text-2xl font-bold mb-6 text-center">
-                {questions[currentQuestion].questionText}
+                {currentQuestionData.questionText}
               </h2>
               <div className="grid grid-cols-1 gap-4">
-                {questions[currentQuestion].answers.map((answer) => {
+                {currentQuestionData.answers.map((answer) => {
                   const isSelected = currentAnswer?.answerId === answer.id;
                   const variant = isSelected
                     ? answer.isCorrect
@@ -171,7 +218,7 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
                       key={answer.id}
                       variant={variant}
                       onClick={() =>
-                        handleAnswer(answer, questions[currentQuestion].id)
+                        handleAnswer(answer, currentQuestionData.id)
                       }
                       disabled={isAnswerSelected}
                       className="disabled:opacity-100 h-auto py-3 text-left"
@@ -187,13 +234,12 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
       </main>
       <footer className="p-4">
         <div className="w-full max-w-3xl mx-auto">
-          {isAnswerSelected && (
+          {isAnswerSelected && currentQuestionData && (
             <QuizzResultCard
               isCorrect={currentAnswer!.isCorrect}
               correctAnswer={
-                questions[currentQuestion].answers.find(
-                  (answer) => answer.isCorrect
-                )?.answerText || "No correct answer found"
+                currentQuestionData.answers.find((answer) => answer.isCorrect)
+                  ?.answerText || "No correct answer found"
               }
             />
           )}
@@ -217,4 +263,4 @@ const QuizzQuestions = ({ quizz, userId }: Props) => {
 
 export default QuizzQuestions;
 
-//this is an old code
+//OLD CODE

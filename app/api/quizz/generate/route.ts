@@ -1,3 +1,5 @@
+// app/api/quizz/generate/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
@@ -164,3 +166,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+//OLD CODE

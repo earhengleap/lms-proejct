@@ -1,33 +1,30 @@
-// app/api/uploadthing/core.ts
-
-import { canUpload } from "@/lib/administrator";
-import { auth } from "@clerk/nextjs/server";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
+import { auth } from "@clerk/nextjs/server";
 
 const f = createUploadthing();
 
 const handleAuth = () => {
-    const { userId } = auth();
-    const isAuthorized = canUpload(userId);
-
-    if (!userId || !isAuthorized) throw new Error("Unauthorized");
-    return { userId };
-}
+  const { userId } = auth();
+  if (!userId) throw new Error("Unauthorized");
+  return { userId };
+};
 
 export const ourFileRouter = {
-    courseImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-        .middleware(() => handleAuth())
-        .onUploadComplete(() => {}),
-    courseAttachment: f(["text", "image", "video", "audio", "pdf"])
-        .middleware(() => handleAuth())
-        .onUploadComplete(() => {}),
-    chapterVideo: f({ video: { maxFileSize: "512GB", maxFileCount: 1 } })
-        .middleware(() => handleAuth())
-        .onUploadComplete(() => {}),
-    // Add the new QR code upload configuration
-    bankQrCode: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
-        .middleware(() => handleAuth())
-        .onUploadComplete(() => {}),
+  courseImage: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    .middleware(() => handleAuth())
+    .onUploadComplete(() => {}),
+    
+  courseAttachment: f(["text", "image", "video", "audio", "pdf"])
+    .middleware(() => handleAuth())
+    .onUploadComplete(() => {}),
+    
+  chapterVideo: f({ video: { maxFileSize: "512MB", maxFileCount: 1 } })
+    .middleware(() => handleAuth())
+    .onUploadComplete(() => {}),
+    
+  bankQrCode: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    .middleware(() => handleAuth())
+    .onUploadComplete(() => {})
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

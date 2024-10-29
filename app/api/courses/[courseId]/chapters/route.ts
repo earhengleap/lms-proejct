@@ -1,8 +1,39 @@
-//app/api/courses/[courseId]/chapters/route.ts
+// app/api/courses/[courseId]/chapters/route.ts
 
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+
+export async function GET(
+  req: Request,
+  { params }: { params: { courseId: string } }
+) {
+  try {
+    const { userId } = auth();
+
+    if (!userId) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const chapters = await db.chapter.findMany({
+      where: {
+        courseId: params.courseId,
+      },
+      orderBy: {
+        position: 'asc'
+      },
+      include: {
+        muxData: true,
+        quizzes: true,
+      }
+    });
+
+    return NextResponse.json(chapters);
+  } catch (error) {
+    console.log("[CHAPTERS_GET]", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}
 
 export async function POST(
   req: Request,
@@ -42,16 +73,9 @@ export async function POST(
       data: {
         title,
         position: newPosition,
-        course: {
-          connect: {
-            id: params.courseId
-          }
-        },
-        user: {
-          connect: {
-            userId: userId
-          }
-        }
+        courseId: params.courseId,
+        userId: userId,
+        isFree: newPosition === 1 // Still sets first chapter free by default, but can be changed later
       }
     });
 

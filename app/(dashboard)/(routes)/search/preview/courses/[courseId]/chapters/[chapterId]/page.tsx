@@ -1,3 +1,5 @@
+// app/(dashboard)/(routes)/search/preview/courses/[courseId]/chapters/[chapterId]/page.tsx
+
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
