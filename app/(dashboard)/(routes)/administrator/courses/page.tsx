@@ -4,6 +4,8 @@ import {
   useQuery,
   QueryClient,
   QueryClientProvider,
+  useMutation,
+  useQueryClient,
 } from "@tanstack/react-query";
 import axios from "axios";
 import {
@@ -11,12 +13,38 @@ import {
   Users,
   DollarSign,
   Image as ImageIcon,
-  TrendingUp,
+  AlertCircle,
+  Search,
+  SlidersHorizontal,
+  Trash2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useState, useMemo, useCallback } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpDown } from "lucide-react";
 
 const queryClient = new QueryClient();
 
@@ -37,9 +65,163 @@ interface Course {
   };
 }
 
+// Add these type definitions and constants at the top of your file
+type SortOption = {
+  label: string;
+  value: string;
+  sortFn: (a: Course, b: Course) => number;
+};
+
+const SORT_OPTIONS: SortOption[] = [
+  {
+    label: "Newest First",
+    value: "date-desc",
+    sortFn: (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  },
+  {
+    label: "Oldest First",
+    value: "date-asc",
+    sortFn: (a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  },
+  {
+    label: "Price: High to Low",
+    value: "price-desc",
+    sortFn: (a, b) => b.price - a.price,
+  },
+  {
+    label: "Price: Low to High",
+    value: "price-asc",
+    sortFn: (a, b) => a.price - b.price,
+  },
+  {
+    label: "Most Students",
+    value: "students-desc",
+    sortFn: (a, b) => b._count.purchases - a._count.purchases,
+  },
+  {
+    label: "Least Students",
+    value: "students-asc",
+    sortFn: (a, b) => a._count.purchases - b._count.purchases,
+  },
+];
+
+// Add these new components
+const SearchBar = ({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) => {
+  return (
+    <div className="relative flex-1">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+      <Input
+        placeholder="Search courses..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-10"
+      />
+    </div>
+  );
+};
+
+const SortButton = ({
+  currentSort,
+  onSortChange,
+}: {
+  currentSort: string;
+  onSortChange: (value: string) => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="outline" size="sm" className="ml-2">
+        <ArrowUpDown className="w-4 h-4 mr-2" />
+        {SORT_OPTIONS.find((option) => option.value === currentSort)?.label ||
+          "Sort by"}
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" className="w-48">
+      {SORT_OPTIONS.map((option) => (
+        <DropdownMenuItem
+          key={option.value}
+          onClick={() => onSortChange(option.value)}
+          className={currentSort === option.value ? "bg-accent" : ""}
+        >
+          {option.label}
+        </DropdownMenuItem>
+      ))}
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
+
 const fetchCourses = async (): Promise<Course[]> => {
-  const response = await axios.get("/api/admin/courses");
+  try {
+    const response = await axios.get("/api/admin/courses");
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to fetch courses. Please try again later.");
+  }
+};
+
+const deleteCourse = async (courseId: string): Promise<void> => {
+  const response = await axios.delete(`/api/admin/courses/${courseId}`);
   return response.data;
+};
+
+const DeleteCourseButton = ({ course }: { course: Course }) => {
+  const queryClient = useQueryClient();
+
+  const { mutate: deleteMutation, isPending } = useMutation({
+    mutationFn: deleteCourse,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["adminCourses"] });
+      toast.success("Course deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete course. Please try again.");
+      console.error("Delete error:", error);
+    },
+  });
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+        >
+          <Trash2 className="w-4 h-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Course</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete "{course.title}"? This action cannot
+            be undone and will remove all associated content and student
+            enrollments.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={isPending}
+            onClick={(e) => {
+              e.preventDefault();
+              deleteMutation(course.id);
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {isPending ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 };
 
 const CourseCard = ({ course }: { course: Course }) => (
@@ -85,12 +267,19 @@ const CourseCard = ({ course }: { course: Course }) => (
             <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 line-clamp-2 hover:text-blue-600 transition-colors duration-200">
               {course.title}
             </h3>
-            <Badge
-              variant={course.isPublished ? "default" : "secondary"}
-              className={`ml-2 ${course.isPublished ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
-            >
-              {course.isPublished ? "Published" : "Draft"}
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <Badge
+                variant={course.isPublished ? "default" : "secondary"}
+                className={`${
+                  course.isPublished
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 text-gray-800"
+                }`}
+              >
+                {course.isPublished ? "Published" : "Draft"}
+              </Badge>
+              <DeleteCourseButton course={course} />
+            </div>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mt-2">
             {course.description}
@@ -165,7 +354,20 @@ const CourseSkeleton = () => (
   </Card>
 );
 
+const ErrorMessage = ({ message }: { message: string }) => (
+  <div className="flex items-center justify-center p-8 rounded-lg bg-red-50 dark:bg-red-900/20">
+    <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 mr-2" />
+    <span className="text-red-600 dark:text-red-400">{message}</span>
+  </div>
+);
+
 const CoursesContent = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentSort, setCurrentSort] = useState(SORT_OPTIONS[0].value);
+  const [activeTab, setActiveTab] = useState<"published" | "drafts">(
+    "published"
+  );
+
   const {
     data: courses,
     isLoading,
@@ -174,6 +376,43 @@ const CoursesContent = () => {
     queryKey: ["adminCourses"],
     queryFn: fetchCourses,
   });
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value.toLowerCase());
+  }, []);
+
+  const handleSortChange = useCallback((value: string) => {
+    setCurrentSort(value);
+  }, []);
+
+  const filteredAndSortedCourses = useMemo(() => {
+    if (!courses) return { publishedCourses: [], draftCourses: [] };
+
+    // Filter courses based on search query
+    const filtered = courses.filter((course) => {
+      const searchFields = [
+        course.title,
+        course.description,
+        course.publisher.name,
+        course.price.toString(),
+      ].map((field) => (field || "").toLowerCase());
+
+      return searchFields.some((field) => field.includes(searchQuery));
+    });
+
+    // Sort courses based on selected sort option
+    const sortOption = SORT_OPTIONS.find(
+      (option) => option.value === currentSort
+    );
+    const sorted = sortOption
+      ? [...filtered].sort(sortOption.sortFn)
+      : filtered;
+
+    return {
+      publishedCourses: sorted.filter((course) => course.isPublished),
+      draftCourses: sorted.filter((course) => !course.isPublished),
+    };
+  }, [courses, searchQuery, currentSort]);
 
   return (
     <div className="p-6 sm:p-8 space-y-8">
@@ -186,10 +425,15 @@ const CoursesContent = () => {
         </p>
       </div>
 
-      <AnimatePresence>
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {isLoading ? (
-            Array(6)
+      <div className="flex flex-col sm:flex-row gap-4">
+        <SearchBar value={searchQuery} onChange={handleSearch} />
+        <SortButton currentSort={currentSort} onSortChange={handleSortChange} />
+      </div>
+
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {Array(6)
               .fill(0)
               .map((_, index) => (
                 <motion.div
@@ -201,19 +445,88 @@ const CoursesContent = () => {
                 >
                   <CourseSkeleton />
                 </motion.div>
-              ))
-          ) : error ? (
-            <div className="col-span-full flex items-center justify-center p-8 rounded-lg bg-red-50 dark:bg-red-900/20">
-              <span className="text-red-600 dark:text-red-400">
-                Error loading courses
-              </span>
-            </div>
-          ) : (
-            courses?.map((course) => (
-              <CourseCard key={course.id} course={course} />
-            ))
-          )}
-        </div>
+              ))}
+          </div>
+        ) : error ? (
+          <ErrorMessage message={(error as Error).message} />
+        ) : (
+          <Tabs
+            defaultValue="published"
+            value={activeTab}
+            onValueChange={(value) =>
+              setActiveTab(value as "published" | "drafts")
+            }
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-8">
+              <TabsTrigger
+                value="published"
+                className="flex items-center gap-2"
+              >
+                Published
+                <Badge
+                  variant="default"
+                  className="bg-green-100 text-green-800"
+                >
+                  {filteredAndSortedCourses.publishedCourses.length}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="drafts" className="flex items-center gap-2">
+                Drafts
+                <Badge
+                  variant="secondary"
+                  className="bg-gray-100 text-gray-800"
+                >
+                  {filteredAndSortedCourses.draftCourses.length}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="published">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {filteredAndSortedCourses.publishedCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                  {filteredAndSortedCourses.publishedCourses.length === 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="col-span-full flex items-center justify-center p-8 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    >
+                      <span className="text-gray-600 dark:text-gray-400">
+                        No published courses found
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="drafts">
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {filteredAndSortedCourses.draftCourses.map((course) => (
+                    <CourseCard key={course.id} course={course} />
+                  ))}
+                  {filteredAndSortedCourses.draftCourses.length === 0 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="col-span-full flex items-center justify-center p-8 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    >
+                      <span className="text-gray-600 dark:text-gray-400">
+                        No draft courses found
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
       </AnimatePresence>
     </div>
   );
@@ -226,3 +539,5 @@ const Courses = () => (
 );
 
 export default Courses;
+
+//OLD CODE
