@@ -20,10 +20,12 @@ import {
   Clock,
   TrendingUp,
   Award,
+  AlertCircle,
 } from "lucide-react";
 import { DataCard } from "../analytics/_components/data-card";
 import { getWalletData } from "@/actions/get-wallet-data";
 import WithdrawalDialog from "./_components/withdrawl-dialog";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const WalletPage = async () => {
   const { userId } = auth();
@@ -40,8 +42,10 @@ const WalletPage = async () => {
     pendingBalance,
     withdrawnRevenue,
     transactions,
-    publisherId, // Add this to your getWalletData return type
+    publisherId,
   } = await getWalletData(userId);
+
+  const showWithdrawalOptions = publisherId !== null && availableBalance > 0;
 
   return (
     <div className="p-6 bg-gray-50">
@@ -103,16 +107,26 @@ const WalletPage = async () => {
           <CreditCard className="h-6 w-6 mr-2 text-blue-600" />
           Withdrawal Options
         </h2>
-        <div className="flex space-x-4">
-          <WithdrawalDialog
-            availableBalance={availableBalance}
-            publisherId={publisherId}
-          />
-          {/* <Button variant="outline" className="flex items-center">
-            <CreditCard className="h-4 w-4 mr-2" />
-            Withdraw to PayPal
-          </Button> */}
-        </div>
+        {showWithdrawalOptions ? (
+          <div className="flex space-x-4">
+            <WithdrawalDialog
+              availableBalance={availableBalance}
+              publisherId={publisherId}
+            />
+          </div>
+        ) : (
+          <Alert className="bg-yellow-50 border-yellow-200">
+            <AlertCircle className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-700">
+              No Withdrawal Available
+            </AlertTitle>
+            <AlertDescription className="text-yellow-600">
+              {!publisherId
+                ? "Your publisher account needs to be set up before you can make withdrawals."
+                : "You need to have an available balance to make withdrawals."}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
@@ -120,35 +134,46 @@ const WalletPage = async () => {
           <Clock className="h-6 w-6 mr-2 text-blue-600" />
           Recent Transactions
         </h2>
-        <Table>
-          <TableCaption>A list of your recent transactions</TableCaption>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {transactions.map((transaction) => (
-              <TableRow key={transaction.id}>
-                <TableCell>{transaction.date}</TableCell>
-                <TableCell>{transaction.description}</TableCell>
-                <TableCell
-                  className={`text-right ${transaction.amount > 0 ? "text-green-600" : "text-red-600"}`}
-                >
-                  {transaction.amount > 0 ? "+" : ""}
-                  {transaction.amount.toFixed(2)}
-                </TableCell>
+        {transactions.length > 0 ? (
+          <Table>
+            <TableCaption>A list of your recent transactions</TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {transactions.map((transaction) => (
+                <TableRow key={transaction.id}>
+                  <TableCell>{transaction.date}</TableCell>
+                  <TableCell>{transaction.description}</TableCell>
+                  <TableCell
+                    className={`text-right ${
+                      transaction.amount > 0 ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {transaction.amount > 0 ? "+" : ""}
+                    {transaction.amount.toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <Alert className="bg-gray-50 border-gray-200">
+            <AlertCircle className="h-4 w-4 text-gray-600" />
+            <AlertTitle className="text-gray-700">No Transactions</AlertTitle>
+            <AlertDescription className="text-gray-600">
+              Your transaction history will appear here once you start receiving
+              payments.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );
 };
 
 export default WalletPage;
-
-//OLD CODE
