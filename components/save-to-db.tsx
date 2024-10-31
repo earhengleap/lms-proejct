@@ -1,3 +1,5 @@
+// components/save-to-db.tsx
+
 import { PrismaClient } from "@prisma/client";
 import { auth } from "@clerk/nextjs/server";
 
@@ -38,36 +40,41 @@ export default async function saveQuizz(quizzData: SaveQuizzData) {
     throw new Error("Invalid course or chapter");
   }
 
-  // Insert the new quiz
-  const newQuizz = await prisma.quiz.create({
-    data: {
-      name,
-      description,
-      userId,
-      courseId,
-      chapterId,
-      questions: {
-        create:
-          questions?.map((question) => ({
-            questionText: question.questionText,
-            answers: {
-              create:
-                question.answers?.map((answer) => ({
-                  answerText: answer.answerText,
-                  isCorrect: answer.isCorrect,
-                })) || [],
-            },
-          })) || [],
-      },
-    },
-    include: {
-      questions: {
-        include: {
-          answers: true,
+  try {
+    // Insert the new quiz with type field
+    const newQuizz = await prisma.quiz.create({
+      data: {
+        name,
+        description,
+        type: "automatic",
+        userId,
+        courseId,
+        chapterId,
+        questions: {
+          create:
+            questions?.map((question) => ({
+              questionText: question.questionText,
+              answers: {
+                create:
+                  question.answers?.map((answer) => ({
+                    answerText: answer.answerText,
+                    isCorrect: answer.isCorrect,
+                  })) || [],
+              },
+            })) || [],
         },
       },
-    },
-  });
+      include: {
+        questions: {
+          include: {
+            answers: true,
+          },
+        },
+      },
+    });
 
-  return newQuizz;
+    return newQuizz;
+  } catch (error) {
+    throw error;
+  }
 }

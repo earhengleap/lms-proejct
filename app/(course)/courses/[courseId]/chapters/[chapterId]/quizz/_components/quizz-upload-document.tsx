@@ -68,17 +68,22 @@ interface QuizzUploadDocumentProps {
   initialData: Quiz | null;
   courseId: string;
   chapterId: string;
+  onQuizDeleted?: () => void;
 }
 
 interface ContentAnalysis {
   wordCount: number;
-  meaningfulWords: number; // Added
+  meaningfulWords: number;
   possibleQuestions: number;
   isContentSufficient: boolean;
   recommendation: string;
-  contentDensity: number; // Added
-  estimatedWordsPerQuestion: number; // Added
+  contentDensity: number;
+  estimatedWordsPerQuestion: number;
+  isContentTooLarge: boolean;
 }
+
+const MAX_QUESTIONS = 10;
+const WORDS_PER_QUESTION = 50;
 
 const formSchema = z.object({
   pdf: z.instanceof(File).optional(),
@@ -95,6 +100,7 @@ const QuizzUploadDocument = ({
   initialData,
   courseId,
   chapterId,
+  onQuizDeleted,
 }: QuizzUploadDocumentProps) => {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
@@ -158,6 +164,7 @@ const QuizzUploadDocument = ({
         params: { courseId, chapterId },
       });
       toast.success("Quiz deleted successfully");
+      onQuizDeleted?.(); // Call the callback after successful deletion
       router.refresh();
     } catch (error) {
       toast.error("Something went wrong");
@@ -186,32 +193,33 @@ const QuizzUploadDocument = ({
       const reader = new FileReader();
       reader.onload = async (e) => {
         const text = e.target?.result as string;
-        setContentLength(text.length);
 
         // Perform enhanced analysis
         const analysis = analyzeContent(text);
         setContentAnalysis(analysis);
         setMaxPossibleQuestions(analysis.possibleQuestions);
 
-        // Set warnings based on analysis
+        // Set initial question count based on analysis
+        const initialCount = Math.min(5, analysis.possibleQuestions);
+        setCustomQuestionCount(String(initialCount));
+        form.setValue("questionCount", String(initialCount));
+
+        // Set appropriate warnings
         if (!analysis.isContentSufficient) {
           setShowInsufficientAlert(true);
           setContentWarning(
             "Content lacks sufficient detail for meaningful questions."
           );
-        } else if (analysis.possibleQuestions < 15) {
-          const warning = `Based on content analysis, we can generate up to ${analysis.possibleQuestions} 
-            high-quality questions. Requesting more may result in repetitive or low-quality questions.`;
-          setContentWarning(warning);
-
-          // Automatically adjust question count if too high
-          const recommendedCount = Math.min(5, analysis.possibleQuestions);
-          setCustomQuestionCount(String(recommendedCount));
-          form.setValue("questionCount", String(recommendedCount));
-        } else {
-          setContentWarning("");
-          setCustomQuestionCount("15");
-          form.setValue("questionCount", "15");
+        } else if (analysis.isContentTooLarge) {
+          setContentWarning(
+            `Your content could support more questions, but we'll generate a maximum of ${MAX_QUESTIONS} 
+            questions for optimal quiz length.`
+          );
+        } else if (analysis.possibleQuestions < MAX_QUESTIONS) {
+          setContentWarning(
+            `Based on content analysis, we can generate up to ${analysis.possibleQuestions} 
+            high-quality questions.`
+          );
         }
       };
       reader.readAsText(file);
@@ -219,11 +227,10 @@ const QuizzUploadDocument = ({
       // Reset states
       setUploadedFile(null);
       form.setValue("pdf", undefined);
-      setContentLength(0);
-      setContentWarning("");
-      setCustomQuestionCount("5");
       setContentAnalysis(null);
       setShowInsufficientAlert(false);
+      setCustomQuestionCount("5");
+      setContentWarning("");
     }
   };
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -292,31 +299,30 @@ const QuizzUploadDocument = ({
   };
 
   const analyzeContent = (text: string): ContentAnalysis => {
-    // More accurate word count calculation
     const words = text.split(/\s+/).filter((word) => word.length > 0);
     const wordCount = words.length;
-
-    // Calculate meaningful content density
     const meaningfulWords = words.filter((word) => word.length > 3).length;
     const contentDensity = meaningfulWords / wordCount;
 
     // Calculate possible questions based on meaningful content
-    const wordsPerQuestion = contentDensity > 0.7 ? 40 : 60;
-    const estimatedQuestions = Math.floor(meaningfulWords / wordsPerQuestion);
+    const wordsPerQuestion =
+      contentDensity > 0.7 ? WORDS_PER_QUESTION : WORDS_PER_QUESTION * 1.5;
+    const theoreticalQuestions = Math.floor(meaningfulWords / wordsPerQuestion);
 
-    // Cap at 15 questions but ensure accuracy of estimation
-    const possibleQuestions = Math.min(estimatedQuestions, 15);
+    // Cap at MAX_QUESTIONS
+    const possibleQuestions = Math.min(theoreticalQuestions, MAX_QUESTIONS);
     const isContentSufficient = meaningfulWords >= wordsPerQuestion;
+    const isContentTooLarge = theoreticalQuestions > MAX_QUESTIONS;
 
     let recommendation = "";
     if (!isContentSufficient) {
       recommendation = `The content is too short (${wordCount} words, ${meaningfulWords} meaningful words). 
-        We recommend at least ${wordsPerQuestion} meaningful words for one question.`;
-    } else if (possibleQuestions < 15) {
-      recommendation = `Based on content analysis (${wordCount} total words, ${meaningfulWords} meaningful words), 
-        we can reliably generate up to ${possibleQuestions} questions for optimal quality.`;
+        We recommend at least ${Math.ceil(wordsPerQuestion)} meaningful words for one question.`;
+    } else if (isContentTooLarge) {
+      recommendation = `Your content could support ${theoreticalQuestions} questions, but we'll generate the maximum of ${MAX_QUESTIONS} 
+        questions for optimal quiz length. Consider splitting into multiple quizzes for comprehensive coverage.`;
     } else {
-      recommendation = `Content is sufficient for the maximum of 15 questions.`;
+      recommendation = `Content can support ${possibleQuestions} high-quality questions.`;
     }
 
     return {
@@ -327,6 +333,7 @@ const QuizzUploadDocument = ({
       recommendation,
       contentDensity,
       estimatedWordsPerQuestion: wordsPerQuestion,
+      isContentTooLarge,
     };
   };
 
@@ -566,13 +573,14 @@ const QuizzUploadDocument = ({
                           <div className="relative group">
                             <Info className="h-4 w-4 text-slate-500 cursor-help" />
                             <div className="absolute hidden group-hover:block w-64 p-2 bg-slate-800 text-white text-xs rounded-md -top-2 left-6 z-50">
-                              Maximum 15 questions. The system will analyze
-                              content and adjust if needed.
+                              Maximum {MAX_QUESTIONS} questions. The system will
+                              analyze content and adjust if needed.
                             </div>
                           </div>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          Max: {Math.min(15, maxPossibleQuestions)} questions
+                          Max: {Math.min(MAX_QUESTIONS, maxPossibleQuestions)}{" "}
+                          questions
                         </span>
                       </div>
 

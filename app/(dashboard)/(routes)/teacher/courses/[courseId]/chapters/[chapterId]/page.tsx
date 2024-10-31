@@ -12,7 +12,7 @@ import ChapterAccessForm from "./_components/chapter-access-form";
 import ChapterVideoForm from "./_components/chapter-video-form";
 import { Banner } from "@/components/banner";
 import { ChapterActions } from "./_components/chapter-actions";
-import QuizzUploadDocument from "@/app/(course)/courses/[courseId]/chapters/[chapterId]/quizz/_components/quizz-upload-document";
+import { QuizTabs } from "./_components/quiz-tab";
 
 const ChapterIdPage = async ({
   params,
@@ -25,6 +25,7 @@ const ChapterIdPage = async ({
     return redirect("/");
   }
 
+  // Fetch chapter with all related data
   const chapter = await db.chapter.findUnique({
     where: {
       id: params.chapterId,
@@ -32,7 +33,15 @@ const ChapterIdPage = async ({
     },
     include: {
       muxData: true,
-      quizzes: true,
+      quizzes: {
+        include: {
+          questions: {
+            include: {
+              answers: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -40,7 +49,7 @@ const ChapterIdPage = async ({
     return redirect("/");
   }
 
-  // Check if there is a pending deletion request for the chapter
+  // Check for pending deletion request
   const deletionRequest = await db.deletionRequest.findFirst({
     where: {
       itemId: params.chapterId,
@@ -51,11 +60,12 @@ const ChapterIdPage = async ({
 
   const initialPendingStatus = Boolean(deletionRequest);
 
+  // Check for required fields
   const requireFields = [
     chapter.title,
     chapter.description,
     chapter.videoUrl,
-    chapter.quizzes,
+    chapter.quizzes.length > 0,
   ];
 
   const totalFields = requireFields.length;
@@ -64,6 +74,12 @@ const ChapterIdPage = async ({
   const completionText = `(${completedFields}/${totalFields})`;
 
   const isComplete = requireFields.every(Boolean);
+
+  // Separate quizzes by type for better organization
+  const automaticQuiz = chapter.quizzes.find(
+    (quiz) => quiz.type === "automatic"
+  );
+  const manualQuiz = chapter.quizzes.find((quiz) => quiz.type === "manual");
 
   return (
     <>
@@ -117,8 +133,9 @@ const ChapterIdPage = async ({
                 courseId={params.courseId}
                 chapterId={params.chapterId}
               />
-              <QuizzUploadDocument
-                initialData={chapter.quizzes[0] || null}
+              <QuizTabs
+                automaticQuiz={automaticQuiz || null}
+                manualQuiz={manualQuiz || null}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
               />
@@ -126,7 +143,7 @@ const ChapterIdPage = async ({
             <div>
               <div className="flex items-center gap-x-2">
                 <IconBadge icon={Eye} />
-                <h2 className="text-xl">Account Settings</h2>
+                <h2 className="text-xl">Access Settings</h2>
               </div>
               <ChapterAccessForm
                 initialData={chapter}
