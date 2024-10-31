@@ -33,7 +33,7 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
         course: {
           include: {
             chapters: {
-              where: { isPublished: true }, // Only include published chapters
+              where: { isPublished: true },
               include: {
                 userProgress: {
                   where: {
@@ -103,7 +103,7 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
           <div className="aspect-video relative">
             <VideoPlayer
               chapterId={chapterId}
-              title={chapter.title}
+              title={chapter.course.title}
               courseId={courseId}
               nextChapterId={nextChapter?.id}
               playbackId={chapter.muxData?.playbackId!}
@@ -132,12 +132,12 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
         </div>
       </div>
 
-      {/* Chapter Details and Progress Section */}
+      {/* Course Details and Progress Section */}
       <div className="mt-8 px-4 sm:px-6 lg:px-8 space-y-4">
         <div className="bg-white rounded-lg p-6 border transition-all duration-300 hover:shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-4 sm:space-y-0 sm:space-x-4">
             <h3 className="font-bold text-2xl text-gray-800 transition-colors duration-300 hover:text-sky-600 mb-2 sm:mb-0">
-              {chapter.title}
+              {chapter.course.title}
             </h3>
             <div className="flex items-center gap-x-2 text-sm text-gray-500">
               <IconBadge size="sm" icon={BookOpen} />
