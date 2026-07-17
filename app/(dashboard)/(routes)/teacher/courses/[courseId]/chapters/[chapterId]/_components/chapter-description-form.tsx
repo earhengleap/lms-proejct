@@ -67,10 +67,12 @@ const ChapterDescriptionForm = ({
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter description
-        <Button onClick={toggleEdit} variant={"ghost"}>
+        <span className="text-sm font-semibold text-slate-700">
+          Chapter description
+        </span>
+        <Button onClick={toggleEdit} variant={"ghost"} size="sm">
           {isEditing ? (
             <>Cancel</>
           ) : (

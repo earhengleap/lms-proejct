@@ -23,7 +23,6 @@ export async function GET(
         position: 'asc'
       },
       include: {
-        muxData: true,
         quizzes: true,
       }
     });

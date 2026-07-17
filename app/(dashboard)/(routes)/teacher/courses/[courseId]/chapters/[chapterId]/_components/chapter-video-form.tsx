@@ -2,17 +2,16 @@
 
 import * as z from "zod";
 import axios from "axios";
-import MuxPlayer from "@mux/mux-player-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { ImageIcon, Pencil, PlusCircle, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
-import { Chapter, MuxData } from "@prisma/client";
+import { Chapter } from "@prisma/client";
 
 interface ChapterVideoFormProps {
-  initialData: Chapter & { muxData?: MuxData | null };
+  initialData: Chapter;
   courseId: string;
   chapterId: string;
 }
@@ -47,10 +46,12 @@ const ChapterVideoForm = ({
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4">
       <div className="font-medium flex items-center justify-between">
-        Course video
-        <Button onClick={toggleEdit} variant={"ghost"}>
+        <span className="text-sm font-semibold text-slate-700">
+          Chapter video
+        </span>
+        <Button onClick={toggleEdit} variant={"ghost"} size="sm">
           {isEditing && <>Cancel</>}
           {!isEditing && !initialData.videoUrl && (
             <>
@@ -72,8 +73,13 @@ const ChapterVideoForm = ({
             <Video className="h-10 w-10 text-slate-500" />
           </div>
         ) : (
-          <div className="relative aspect-video mt-2">
-            <MuxPlayer playbackId={initialData?.muxData?.playbackId || ""} />
+          <div className="relative aspect-video mt-2 overflow-hidden rounded-md bg-slate-900">
+            <video
+              src={initialData.videoUrl}
+              controls
+              playsInline
+              className="absolute inset-0 h-full w-full"
+            />
           </div>
         ))}
       {isEditing && (
@@ -86,13 +92,13 @@ const ChapterVideoForm = ({
               }
             }}
           />
-          <div className="text-xs text-muted-forground mt-4">
+          <div className="text-xs text-muted-foreground mt-4">
             Upload this chapter&apos;s video
           </div>
         </div>
       )}
       {initialData.videoUrl && !isEditing && (
-        <div className="text-xs text-muted-forground mt-2">
+        <div className="text-xs text-muted-foreground mt-2">
           Video can take a few minutes to process. Refresh the page if video
           does not appear.
         </div>

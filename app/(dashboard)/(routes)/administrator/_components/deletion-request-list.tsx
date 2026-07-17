@@ -57,8 +57,8 @@ export const DeletionRequestList = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex justify-center items-center h-[260px]">
+        <div className="h-6 w-6 rounded-full border-2 border-slate-200 border-t-slate-500 animate-spin" />
       </div>
     );
   }
@@ -71,10 +71,14 @@ export const DeletionRequestList = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="flex flex-col items-center justify-center h-[300px] text-muted-foreground"
+            className="flex flex-col items-center justify-center h-[260px] text-slate-400"
           >
-            <FileText className="h-12 w-12 mb-2 opacity-50" />
-            <p className="text-sm">No pending deletion requests</p>
+            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+              <FileText className="h-5 w-5 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-600">
+              No pending deletion requests
+            </p>
           </motion.div>
         ) : (
           <ul className="space-y-3">
@@ -84,41 +88,41 @@ export const DeletionRequestList = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="group rounded-lg border border-border p-4 hover:shadow-md transition-all duration-200 bg-card"
+                className="group rounded-xl border border-slate-200/70 p-4 hover:border-slate-300 hover:shadow-sm transition-all duration-200"
               >
                 <div className="flex flex-col space-y-4">
                   {/* Header */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       {request.type === "course" ? (
-                        <div className="p-2 rounded-full bg-blue-100">
-                          <Book className="w-4 h-4 text-blue-600" />
+                        <div className="w-8 h-8 rounded-lg bg-sky-50 flex items-center justify-center">
+                          <Book className="w-4 h-4 text-sky-600" />
                         </div>
                       ) : (
-                        <div className="p-2 rounded-full bg-green-100">
-                          <FileText className="w-4 h-4 text-green-600" />
+                        <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-emerald-600" />
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-sm text-muted-foreground">
-                          {request.type.charAt(0).toUpperCase() +
-                            request.type.slice(1)}{" "}
-                          Deletion
+                        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                          {request.type} deletion
                         </p>
-                        <h3 className="font-semibold">{request.userName}</h3>
+                        <h3 className="font-semibold text-slate-900">
+                          {request.userName}
+                        </h3>
                       </div>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-slate-400">
                       {new Date(request.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
                   {/* Content */}
-                  <div className="pl-12">
-                    <p className="text-sm text-muted-foreground mb-1">
+                  <div className="pl-11">
+                    <p className="text-xs text-slate-500 mb-1">
                       Requesting to delete:
                     </p>
-                    <p className="font-medium">
+                    <p className="text-sm font-medium text-slate-800">
                       {request.type === "course"
                         ? request.itemName
                         : `${request.itemName} in "${request.courseName}"`}
@@ -131,7 +135,7 @@ export const DeletionRequestList = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => handleAction(request.id, "approved")}
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
                     >
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Approve
@@ -140,7 +144,7 @@ export const DeletionRequestList = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => handleAction(request.id, "rejected")}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
                     >
                       <XCircle className="w-4 h-4 mr-2" />
                       Reject

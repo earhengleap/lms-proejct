@@ -57,10 +57,12 @@ const ChapterTitleForm = ({ initialData, courseId, chapterId }: ChapterTitleForm
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="rounded-xl border border-slate-200/70 bg-white p-4">
       <div className="font-medium flex items-center justify-between">
-        Chapter title
-        <Button onClick={toggleEdit} variant={"ghost"}>
+        <span className="text-sm font-semibold text-slate-700">
+          Chapter title
+        </span>
+        <Button onClick={toggleEdit} variant={"ghost"} size="sm">
           {isEditting ? (
             <>Cancel</>
           ) : (
@@ -71,7 +73,9 @@ const ChapterTitleForm = ({ initialData, courseId, chapterId }: ChapterTitleForm
           )}
         </Button>
       </div>
-      {!isEditting && <p className="text-sm mt-2">{initialData.title}</p>}
+      {!isEditting && (
+        <p className="text-sm mt-2 text-slate-600">{initialData.title}</p>
+      )}
       {isEditting && (
         <Form {...form}>
           <form

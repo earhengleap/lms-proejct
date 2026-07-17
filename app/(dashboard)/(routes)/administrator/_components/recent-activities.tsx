@@ -43,33 +43,38 @@ const TIME_PERIODS = {
 
 const ACTIVITY_COLORS = {
   "Deletion Request": {
-    bg: "bg-red-50",
-    text: "text-red-800",
-    border: "border-red-200",
+    iconBg: "bg-rose-50",
+    iconText: "text-rose-600",
+    badgeBg: "bg-rose-50",
+    badgeText: "text-rose-700",
     icon: Trash2,
   },
   "Deletion Request Action": {
-    bg: "bg-yellow-50",
-    text: "text-yellow-800",
-    border: "border-yellow-200",
+    iconBg: "bg-amber-50",
+    iconText: "text-amber-600",
+    badgeBg: "bg-amber-50",
+    badgeText: "text-amber-700",
     icon: Activity,
   },
   "Course Creation": {
-    bg: "bg-green-50",
-    text: "text-green-800",
-    border: "border-green-200",
+    iconBg: "bg-emerald-50",
+    iconText: "text-emerald-600",
+    badgeBg: "bg-emerald-50",
+    badgeText: "text-emerald-700",
     icon: Book,
   },
   "User Registration": {
-    bg: "bg-blue-50",
-    text: "text-blue-800",
-    border: "border-blue-200",
+    iconBg: "bg-sky-50",
+    iconText: "text-sky-600",
+    badgeBg: "bg-sky-50",
+    badgeText: "text-sky-700",
     icon: User,
   },
   "Course Publication": {
-    bg: "bg-purple-50",
-    text: "text-purple-800",
-    border: "border-purple-200",
+    iconBg: "bg-violet-50",
+    iconText: "text-violet-600",
+    badgeBg: "bg-violet-50",
+    badgeText: "text-violet-700",
     icon: BookOpen,
   },
 } as const;
@@ -118,30 +123,30 @@ export const RecentActivities = () => {
   };
 
   return (
-    <div className="h-full bg-white rounded-xl shadow-sm overflow-hidden flex flex-col">
-      <div className="p-4 border-b border-gray-100 flex-shrink-0">
+    <div className="h-full flex flex-col">
+      <div className="p-5 border-b border-slate-100 flex-shrink-0">
         <div className="flex flex-col space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg">
-                <Activity className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                <Activity className="w-4 h-4 text-slate-500" />
               </div>
-              <h2 className="text-lg font-semibold text-gray-800">
-                Activities
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+                Recent Activity
               </h2>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-gray-500">
+            <div className="flex items-center gap-1.5 text-xs text-slate-400">
               <Clock className="w-3.5 h-3.5" />
-              <span>Real-time</span>
+              <span>Live</span>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-2">
             <Select value={period} onValueChange={(value) => setPeriod(value)}>
-              <SelectTrigger className="w-[140px] h-8 text-sm bg-gray-50">
+              <SelectTrigger className="w-[140px] h-9 text-sm rounded-xl bg-slate-50 border-slate-200/60">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl">
                 {Object.entries(TIME_PERIODS).map(([value, label]) => (
                   <SelectItem key={value} value={value} className="text-sm">
                     {label}
@@ -155,7 +160,7 @@ export const RecentActivities = () => {
                 onClick={fetchActivities}
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                className="h-9 px-3 text-xs rounded-xl text-slate-600 border-slate-200/60"
               >
                 <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                 Refresh
@@ -165,7 +170,7 @@ export const RecentActivities = () => {
                 onClick={handleClear}
                 variant="outline"
                 size="sm"
-                className="h-8 px-3 text-xs bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                className="h-9 px-3 text-xs rounded-xl text-rose-600 border-rose-200 hover:bg-rose-50"
                 disabled={activities.length === 0 || isLoading}
               >
                 <Trash2 className="w-3.5 h-3.5 mr-1.5" />
@@ -231,9 +236,10 @@ const ActivityItem = ({ activity }: { activity: Activity }) => {
   const activityConfig = ACTIVITY_COLORS[
     activity.type as keyof typeof ACTIVITY_COLORS
   ] || {
-    bg: "bg-gray-50",
-    text: "text-gray-800",
-    border: "border-gray-200",
+    iconBg: "bg-slate-100",
+    iconText: "text-slate-600",
+    badgeBg: "bg-slate-100",
+    badgeText: "text-slate-600",
     icon: Activity,
   };
 
@@ -244,31 +250,31 @@ const ActivityItem = ({ activity }: { activity: Activity }) => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
-      className={`${activityConfig.bg} rounded-lg p-3 border ${activityConfig.border} transition-all duration-200`}
+      className="flex items-start gap-3 p-3 rounded-xl border border-slate-200/60 hover:border-slate-300 hover:bg-slate-50/50 transition-all duration-200"
     >
-      <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-full ${activityConfig.bg}`}>
-          <IconComponent className={`w-4 h-4 ${activityConfig.text}`} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-800 mb-1">
-            {activity.description}
-          </p>
-          <ActivityDetails activity={activity} />
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <Badge
-            className={`${activityConfig.bg} ${activityConfig.text} border ${activityConfig.border} px-2 py-0.5 text-xs`}
-          >
-            {activity.type}
-          </Badge>
-          <time className="text-xs text-gray-500 flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {formatDistanceToNow(new Date(activity.createdAt), {
-              addSuffix: true,
-            })}
-          </time>
-        </div>
+      <div
+        className={`p-2 rounded-lg shrink-0 ${activityConfig.iconBg} ${activityConfig.iconText}`}
+      >
+        <IconComponent className="w-4 h-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-800 mb-1">
+          {activity.description}
+        </p>
+        <ActivityDetails activity={activity} />
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <Badge
+          className={`${activityConfig.badgeBg} ${activityConfig.badgeText} border-0 px-2 py-0.5 text-xs font-medium`}
+        >
+          {activity.type}
+        </Badge>
+        <time className="text-xs text-slate-400 flex items-center gap-1">
+          <Clock className="w-3 h-3" />
+          {formatDistanceToNow(new Date(activity.createdAt), {
+            addSuffix: true,
+          })}
+        </time>
       </div>
     </motion.li>
   );

@@ -36,8 +36,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="hidden lg:flex pt-[80px] h-full w-72 flex-col fixed inset-y-0 z-[48]">
           {isAdmin && isAdminPage ? <AdminSidebar /> : <Sidebar />}
         </div>
-        <main className={`flex-1 lg:pl-72 pt-[80px]`}>
-          <div className="w-full mx-auto">{children}</div>
+        <main className={`flex-1 lg:pl-72 pt-[80px] overflow-hidden`}>
+          <div className="w-full mx-auto h-full overflow-y-auto">{children}</div>
         </main>
       </div>
     </div>

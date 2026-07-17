@@ -1,6 +1,7 @@
-// _components/student-demographics.tsx
+"use client";
 
-import { PieChart } from "lucide-react";
+import { Users } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface DemographicData {
   category: string;
@@ -19,14 +20,13 @@ export const StudentDemographics: React.FC<StudentDemographicsProps> = ({
 
   if (isEmpty) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <PieChart className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-          No Student Data Yet
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-500 max-w-[250px]">
-          Your student demographic information will appear here once students
-          enroll in your courses.
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+          <Users className="h-5 w-5 text-slate-400" />
+        </div>
+        <p className="text-sm font-medium text-slate-600">No student data yet</p>
+        <p className="text-xs text-slate-400 mt-0.5">
+          Demographics will appear once students enroll
         </p>
       </div>
     );
@@ -34,31 +34,44 @@ export const StudentDemographics: React.FC<StudentDemographicsProps> = ({
 
   return (
     <div className="space-y-4">
-      {data.map((item, index) => (
-        <div key={index} className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {item.category}
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {item.count} students
+      {data.map((item, index) => {
+        const percent = total > 0 ? (item.count / total) * 100 : 0;
+        return (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className="space-y-2"
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-slate-700">
+                {item.category}
               </span>
-              <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                {((item.count / total) * 100).toFixed(1)}%
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400">
+                  {item.count} students
+                </span>
+                <span className="text-sm font-semibold text-emerald-600">
+                  {percent.toFixed(1)}%
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="relative w-full">
-            <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-green-500 dark:bg-green-600 h-full rounded-full transition-all duration-300 ease-in-out"
-                style={{ width: `${(item.count / total) * 100}%` }}
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${percent}%` }}
+                transition={{
+                  duration: 0.8,
+                  delay: index * 0.1,
+                  ease: "easeOut",
+                }}
+                className="bg-emerald-500 h-full rounded-full"
               />
             </div>
-          </div>
-        </div>
-      ))}
+          </motion.div>
+        );
+      })}
     </div>
   );
 };

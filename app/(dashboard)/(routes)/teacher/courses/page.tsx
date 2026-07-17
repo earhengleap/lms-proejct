@@ -1,10 +1,9 @@
-// app/(dashboard)/(routes)/teacher/courses/page.tsx
-
 import { DataTable } from "./_components/data-table";
 import { columns } from "./_components/columns";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { BookOpen } from "lucide-react";
 
 const CoursesPage = async () => {
   const { userId } = auth();
@@ -13,20 +12,18 @@ const CoursesPage = async () => {
     return redirect("/");
   }
 
-  // Fetch all courses for the user
   const courses = await db.course.findMany({
     where: {
       userId,
     },
     include: {
-      chapters: true, // Include related chapters
+      chapters: true,
     },
     orderBy: {
       createdAt: "desc",
     },
   });
 
-  // Fetch all pending deletion requests for courses
   const courseDeletionRequests = await db.deletionRequest.findMany({
     where: {
       userId,
@@ -39,7 +36,6 @@ const CoursesPage = async () => {
     },
   });
 
-  // Fetch all pending deletion requests for chapters
   const chapterDeletionRequests = await db.deletionRequest.findMany({
     where: {
       userId,
@@ -52,7 +48,6 @@ const CoursesPage = async () => {
     },
   });
 
-  // Create a map for course and chapter deletion statuses
   const courseDeletionRequestMap = new Map(
     courseDeletionRequests.map((request) => [request.itemId, request.status])
   );
@@ -60,7 +55,6 @@ const CoursesPage = async () => {
     chapterDeletionRequests.map((request) => [request.itemId, request.status])
   );
 
-  // Map courses to include both course and chapter deletion statuses
   const coursesWithDeletionStatus = courses.map((course) => ({
     ...course,
     deletionStatus: courseDeletionRequestMap.get(course.id) || null,
@@ -71,12 +65,21 @@ const CoursesPage = async () => {
   }));
 
   return (
-    <div className="p-6">
+    <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center">
+            <BookOpen className="h-4.5 w-4.5 text-sky-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">My Courses</h1>
+        </div>
+        <p className="text-sm text-slate-500 ml-12">
+          Manage and organize your courses
+        </p>
+      </div>
       <DataTable columns={columns} data={coursesWithDeletionStatus} />
     </div>
   );
 };
 
 export default CoursesPage;
-
-//OLD CODE

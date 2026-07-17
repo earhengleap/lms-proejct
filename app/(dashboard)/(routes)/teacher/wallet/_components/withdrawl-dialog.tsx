@@ -34,7 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/lib/uploadthing-client";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -475,7 +475,7 @@ const WithdrawalDialog: React.FC<WithdrawalDialogProps> = ({
         ) : (
           <UploadDropzone
             endpoint="bankQrCode"
-            onClientUploadComplete={(res) => {
+            onClientUploadComplete={(res: { url: string }[]) => {
               setQrCodeUrl(res?.[0]?.url);
               toast({
                 title: "Success",

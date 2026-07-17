@@ -69,7 +69,7 @@ const CategoryForm = ({
   );
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-5">
       <div className="font-medium flex items-center justify-between">
         Course category
         <Button onClick={toggleEdit} variant={"ghost"}>

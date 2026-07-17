@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { clsx } from "clsx";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 type Props = {
   isCorrect: boolean | null | undefined;
@@ -11,28 +11,25 @@ const QuizzResultCard = ({ isCorrect, correctAnswer }: Props) => {
     return null;
   }
 
-  const text = isCorrect
-    ? "The answer is correct!"
-    : `The answer is incorrect! The correct answer is: ${correctAnswer}`;
-
-  const borderClasses = clsx({
-    "border-green-500": isCorrect,
-    "border-red-500": !isCorrect,
-  });
-
   return (
     <div
       className={cn(
-        borderClasses,
-        "border",
-        "rounded-lg",
-        "p-4",
-        "text-center",
-        "text-lg",
-        "font-semibold"
+        "rounded-xl p-4 text-sm font-medium flex items-start gap-2.5",
+        isCorrect
+          ? "bg-emerald-50 text-emerald-700"
+          : "bg-rose-50 text-rose-700"
       )}
     >
-      {text}
+      {isCorrect ? (
+        <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+      ) : (
+        <XCircle className="w-4 h-4 mt-0.5 shrink-0" />
+      )}
+      <span>
+        {isCorrect
+          ? "Correct answer!"
+          : `Incorrect. The correct answer is: ${correctAnswer}`}
+      </span>
     </div>
   );
 };

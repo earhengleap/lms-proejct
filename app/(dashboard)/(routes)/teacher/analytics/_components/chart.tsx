@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Area,
   AreaChart,
@@ -51,7 +50,7 @@ interface ChartProps {
 }
 
 const chartColors = [
-  "#3b82f6",
+  "#0ea5e9",
   "#10b981",
   "#f59e0b",
   "#ef4444",
@@ -62,15 +61,15 @@ const chartColors = [
 ];
 
 const standardChartTypes = [
-  { value: "area", label: "Area Chart", icon: Activity },
-  { value: "line", label: "Line Chart", icon: TrendingUp },
-  { value: "bar", label: "Bar Chart", icon: BarChart2 },
+  { value: "area", label: "Area", icon: Activity },
+  { value: "line", label: "Line", icon: TrendingUp },
+  { value: "bar", label: "Bar", icon: BarChart2 },
 ];
 
 const circularChartTypes = [
-  { value: "pie", label: "Pie Chart", icon: PieChartIcon },
-  { value: "radar", label: "Radar Chart", icon: Target },
-  { value: "radial", label: "Radial Chart", icon: Circle },
+  { value: "pie", label: "Pie", icon: PieChartIcon },
+  { value: "radar", label: "Radar", icon: Target },
+  { value: "radial", label: "Radial", icon: Circle },
 ];
 
 const renderActiveShape = (props: any) => {
@@ -100,7 +99,7 @@ const renderActiveShape = (props: any) => {
 
   return (
     <g>
-      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill}>
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill="#64748b" fontSize={12}>
         {payload.name}
       </text>
       <Sector
@@ -131,16 +130,18 @@ const renderActiveShape = (props: any) => {
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
         textAnchor={textAnchor}
-        fill="#333"
+        fill="#334155"
+        fontSize={12}
       >{`$${value.toFixed(2)}`}</text>
       <text
         x={ex + (cos >= 0 ? 1 : -1) * 12}
         y={ey}
         dy={18}
         textAnchor={textAnchor}
-        fill="#999"
+        fill="#94a3b8"
+        fontSize={11}
       >
-        {`(${(percent * 100).toFixed(2)}%)`}
+        {`(${(percent * 100).toFixed(1)}%)`}
       </text>
     </g>
   );
@@ -158,30 +159,35 @@ export const Chart = ({ data }: ChartProps) => {
 
   if (!isMounted) {
     return (
-      <Card className="w-full h-[400px] flex items-center justify-center">
-        <div className="animate-pulse text-2xl font-semibold text-gray-400">
-          Loading chart...
+      <div className="w-full h-[350px] flex items-center justify-center">
+        <div className="flex items-center gap-2 text-sm text-slate-400">
+          <div className="w-4 h-4 rounded-full border-2 border-slate-200 border-t-sky-500 animate-spin" />
+          Loading charts...
         </div>
-      </Card>
+      </div>
     );
   }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 border rounded shadow-lg">
-          <p className="font-bold text-lg mb-2">{label}</p>
-          <p className="text-lg font-semibold text-blue-600">
-            Total Revenue: ${payload[0].value.toFixed(2)}
+        <div className="bg-white px-4 py-3 rounded-xl border border-slate-200/60 shadow-lg">
+          <p className="text-sm font-semibold text-slate-900 mb-1">{label}</p>
+          <p className="text-sm font-medium text-sky-600">
+            ${payload[0].value.toFixed(2)}
           </p>
-          <ul className="mt-2">
-            {payload[0].payload.courses.map((course: any, index: number) => (
-              <li key={index} className="text-sm">
-                <span className="font-medium">{course.title}:</span> $
-                {course.price.toFixed(2)}
-              </li>
-            ))}
-          </ul>
+          {payload[0].payload.courses?.length > 0 && (
+            <ul className="mt-2 pt-2 border-t border-slate-100 space-y-0.5">
+              {payload[0].payload.courses.map((course: any, index: number) => (
+                <li key={index} className="text-xs text-slate-500">
+                  <span className="font-medium text-slate-700">
+                    {course.title}
+                  </span>
+                  : ${course.price.toFixed(2)}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       );
     }
@@ -197,49 +203,89 @@ export const Chart = ({ data }: ChartProps) => {
       case "area":
         return (
           <AreaChart data={data}>
-            <XAxis dataKey="name" />
-            <YAxis />
+            <defs>
+              <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tickFormatter={(v) => `$${v}`}
+            />
             <Tooltip content={<CustomTooltip />} />
             <Area
               type="monotone"
               dataKey="total"
-              stroke={chartColors[0]}
-              fill={chartColors[0]}
+              stroke="#0ea5e9"
+              strokeWidth={2}
+              fill="url(#colorRevenue)"
             />
           </AreaChart>
         );
       case "line":
         return (
           <LineChart data={data}>
-            <XAxis dataKey="name" />
-            <YAxis />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tickFormatter={(v) => `$${v}`}
+            />
             <Tooltip content={<CustomTooltip />} />
             <Line
               type="monotone"
               dataKey="total"
-              stroke={chartColors[1]}
+              stroke="#10b981"
               strokeWidth={2}
+              dot={{ fill: "#10b981", strokeWidth: 0, r: 3 }}
+              activeDot={{ r: 5, strokeWidth: 0 }}
             />
           </LineChart>
         );
       case "bar":
         return (
           <BarChart data={data}>
-            <XAxis dataKey="name" />
-            <YAxis />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tickFormatter={(v) => `$${v}`}
+            />
             <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="total" fill={chartColors[2]}>
+            <Bar dataKey="total" radius={[6, 6, 0, 0]}>
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={chartColors[index % chartColors.length]}
+                  fillOpacity={0.85}
                 />
               ))}
             </Bar>
           </BarChart>
         );
       default:
-        return <div>No Standard Chart Selected</div>;
+        return null;
     }
   };
 
@@ -254,11 +300,12 @@ export const Chart = ({ data }: ChartProps) => {
               data={data}
               cx="50%"
               cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              fill={chartColors[3]}
+              innerRadius={55}
+              outerRadius={75}
+              fill="#0ea5e9"
               dataKey="total"
               onMouseEnter={onPieEnter}
+              strokeWidth={0}
             >
               {data.map((entry, index) => (
                 <Cell
@@ -268,94 +315,107 @@ export const Chart = ({ data }: ChartProps) => {
               ))}
             </Pie>
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
+            <Legend
+              iconType="circle"
+              iconSize={8}
+              formatter={(value: string) => (
+                <span className="text-xs text-slate-600">{value}</span>
+              )}
+            />
           </PieChart>
         );
       case "radar":
         return (
           <RadarChart data={data}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="name" />
-            <PolarRadiusAxis />
+            <PolarGrid stroke="#e2e8f0" />
+            <PolarAngleAxis
+              dataKey="name"
+              tick={{ fontSize: 11, fill: "#94a3b8" }}
+            />
+            <PolarRadiusAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
             <Radar
               dataKey="total"
-              stroke={chartColors[4]}
-              fill={chartColors[4]}
-              fillOpacity={0.6}
+              stroke="#8b5cf6"
+              fill="#8b5cf6"
+              fillOpacity={0.15}
+              strokeWidth={2}
             />
             <Tooltip content={<CustomTooltip />} />
           </RadarChart>
         );
       case "radial":
         return (
-          <RadialBarChart innerRadius="10%" outerRadius="80%" data={data}>
-            <RadialBar dataKey="total" fill={chartColors[5]} />
+          <RadialBarChart innerRadius="15%" outerRadius="80%" data={data}>
+            <RadialBar
+              dataKey="total"
+              fill="#ec4899"
+              strokeWidth={0}
+              cornerRadius={4}
+            />
             <Tooltip content={<CustomTooltip />} />
           </RadialBarChart>
         );
       default:
-        return <div>No Circular Chart Selected</div>;
+        return null;
     }
   };
 
   return (
-    <Card className="w-full shadow-lg bg-gradient-to-br from-blue-50 to-purple-50">
-      <CardHeader className="bg-gradient-to-r from-blue-500 to-sky-500">
-        <CardTitle className="flex items-center justify-between text-white">
-          Transactions
-          <div className="flex space-x-4">
-            <Select
-              value={standardChartType}
-              onValueChange={setStandardChartType}
-            >
-              <SelectTrigger className="w-[180px] bg-white text-gray-800">
-                <SelectValue placeholder="Standard chart type" />
-              </SelectTrigger>
-              <SelectContent>
-                {standardChartTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <div className="flex items-center">
-                      <type.icon className="mr-2 h-4 w-4" />
-                      {type.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+    <div>
+      {/* Chart Type Selectors */}
+      <div className="flex items-center gap-4 mb-6">
+        <Select
+          value={standardChartType}
+          onValueChange={setStandardChartType}
+        >
+          <SelectTrigger className="w-[140px] h-9 rounded-xl border-slate-200/60 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            {standardChartTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value} className="text-sm">
+                <div className="flex items-center gap-2">
+                  <type.icon className="h-3.5 w-3.5 text-slate-500" />
+                  {type.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-            <Select
-              value={circularChartType}
-              onValueChange={setCircularChartType}
-            >
-              <SelectTrigger className="w-[180px] bg-white text-gray-800">
-                <SelectValue placeholder="Circular chart type" />
-              </SelectTrigger>
-              <SelectContent>
-                {circularChartTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    <div className="flex items-center">
-                      <type.icon className="mr-2 h-4 w-4" />
-                      {type.label}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ResponsiveContainer width="100%" height={400}>
-            {renderStandardChart()}
-          </ResponsiveContainer>
-          <ResponsiveContainer width="100%" height={400}>
-            {renderCircularChart()}
+        <Select
+          value={circularChartType}
+          onValueChange={setCircularChartType}
+        >
+          <SelectTrigger className="w-[140px] h-9 rounded-xl border-slate-200/60 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            {circularChartTypes.map((type) => (
+              <SelectItem key={type.value} value={type.value} className="text-sm">
+                <div className="flex items-center gap-2">
+                  <type.icon className="h-3.5 w-3.5 text-slate-500" />
+                  {type.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-slate-50/50 rounded-xl p-4">
+          <ResponsiveContainer width="100%" height={320}>
+            {renderStandardChart() ?? <div />}
           </ResponsiveContainer>
         </div>
-      </CardContent>
-    </Card>
+        <div className="bg-slate-50/50 rounded-xl p-4">
+          <ResponsiveContainer width="100%" height={320}>
+            {renderCircularChart() ?? <div />}
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
   );
 };
-
-//OLD CODE

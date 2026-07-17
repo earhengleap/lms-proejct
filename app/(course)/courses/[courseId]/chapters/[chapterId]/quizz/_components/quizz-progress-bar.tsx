@@ -4,9 +4,9 @@ type Props = {
 
 const QuizzProgressBar = (props: Props) => {
   return (
-    <div className="w-full bg-slate-100 rounded-full h-2.5">
+    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
       <div
-        className="bg-green-500 h-2.5 rounded-md"
+        className="bg-slate-900 h-2 rounded-full transition-all duration-500 ease-out"
         style={{
           width: `${props.value}%`,
         }}

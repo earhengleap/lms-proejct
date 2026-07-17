@@ -1,31 +1,17 @@
-//app/(dashboard)/(routes)/teacher/wallet/page.tsx
-
-import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { WalletStat } from "./_components/wallet-stat";
+import { getWalletData } from "@/actions/get-wallet-data";
+import WithdrawalDialog from "./_components/withdrawl-dialog";
 import {
   DollarSign,
   CreditCard,
-  ArrowDownToLine,
   Clock,
   TrendingUp,
   Award,
-  AlertCircle,
+  ArrowDownToLine,
+  Wallet,
 } from "lucide-react";
-import { DataCard } from "../analytics/_components/data-card";
-import { getWalletData } from "@/actions/get-wallet-data";
-import WithdrawalDialog from "./_components/withdrawl-dialog";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const WalletPage = async () => {
   const { userId } = auth();
@@ -48,130 +34,158 @@ const WalletPage = async () => {
   const showWithdrawalOptions = publisherId !== null && availableBalance > 0;
 
   return (
-    <div className="p-6 bg-gray-50">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Teacher Wallet</h1>
+    <div className="max-w-[1100px] mx-auto px-6 py-10 space-y-10">
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+          Wallet
+        </h1>
+        <p className="text-sm text-slate-500">
+          Your earnings, balance and payout history.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        <DataCard
-          label="Total Revenue"
-          value={totalRevenue}
-          shouldFormat
-          description="Total earnings"
-          icon={<DollarSign className="h-6 w-6" />}
-          color="text-blue-600"
-        />
-        <DataCard
-          label="Instructor Revenue"
-          value={instructorRevenue}
-          shouldFormat
-          description="After 10% Royalty"
-          icon={<DollarSign className="h-6 w-6" />}
-          color="text-green-600"
-        />
-        <DataCard
-          label="Royalty Deducted"
-          value={royalty}
-          shouldFormat
-          description="10% of Total Revenue"
-          icon={<Award className="h-6 w-6" />}
-          color="text-yellow-600"
-        />
-        <DataCard
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <WalletStat
           label="Available Balance"
           value={availableBalance}
           shouldFormat
           description="Ready to withdraw"
-          icon={<DollarSign className="h-6 w-6" />}
-          color="text-indigo-600"
+          icon={<DollarSign className="h-4 w-4" />}
+          emphasis
         />
-        <DataCard
+        <WalletStat
           label="Pending Balance"
           value={pendingBalance}
           shouldFormat
-          description="Will be available soon"
-          icon={<Clock className="h-6 w-6" />}
-          color="text-orange-600"
+          description="Clears in a few days"
+          icon={<Clock className="h-4 w-4" />}
         />
-        <DataCard
-          label="Withdrawn Revenue"
+        <WalletStat
+          label="Withdrawn"
           value={withdrawnRevenue}
           shouldFormat
-          description="Total withdrawn"
-          icon={<TrendingUp className="h-6 w-6" />}
-          color="text-purple-600"
+          description="Total paid out"
+          icon={<TrendingUp className="h-4 w-4" />}
+        />
+        <WalletStat
+          label="Total Revenue"
+          value={totalRevenue}
+          shouldFormat
+          description="Gross earnings"
+          icon={<DollarSign className="h-4 w-4" />}
+        />
+        <WalletStat
+          label="Instructor Revenue"
+          value={instructorRevenue}
+          shouldFormat
+          description="After 10% royalty"
+          icon={<Wallet className="h-4 w-4" />}
+        />
+        <WalletStat
+          label="Royalty Deducted"
+          value={royalty}
+          shouldFormat
+          description="10% platform fee"
+          icon={<Award className="h-4 w-4" />}
         />
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-xl font-semibold mb-4 flex items-center text-blue-700">
-          <CreditCard className="h-6 w-6 mr-2 text-blue-600" />
-          Withdrawal Options
-        </h2>
-        {showWithdrawalOptions ? (
-          <div className="flex space-x-4">
+      {/* Withdrawal */}
+      <section>
+        <div className="flex items-center gap-2.5 mb-4">
+          <CreditCard className="h-4 w-4 text-slate-400" />
+          <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+            Payouts
+          </h2>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200/70 p-6">
+          {showWithdrawalOptions ? (
             <WithdrawalDialog
               availableBalance={availableBalance}
               publisherId={publisherId}
             />
-          </div>
-        ) : (
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertTitle className="text-yellow-700">
-              No Withdrawal Available
-            </AlertTitle>
-            <AlertDescription className="text-yellow-600">
-              {!publisherId
-                ? "Your publisher account needs to be set up before you can make withdrawals."
-                : "You need to have an available balance to make withdrawals."}
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+                <CreditCard className="h-4 w-4 text-slate-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-800">
+                  No payout available
+                </p>
+                <p className="text-sm text-slate-500 mt-0.5 max-w-md">
+                  {!publisherId
+                    ? "Set up your publisher account to enable withdrawals."
+                    : "You need an available balance to make a withdrawal."}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4 flex items-center text-blue-700">
-          <Clock className="h-6 w-6 mr-2 text-blue-600" />
-          Recent Transactions
-        </h2>
-        {transactions.length > 0 ? (
-          <Table>
-            <TableCaption>A list of your recent transactions</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{transaction.date}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell
-                    className={`text-right ${
-                      transaction.amount > 0 ? "text-green-600" : "text-red-600"
+      {/* Transactions */}
+      <section>
+        <div className="flex items-center gap-2.5 mb-4">
+          <Clock className="h-4 w-4 text-slate-400" />
+          <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+            Recent Transactions
+          </h2>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200/70 divide-y divide-slate-100">
+          {transactions.length > 0 ? (
+            transactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between px-5 py-3.5 first:rounded-t-2xl last:rounded-b-2xl hover:bg-slate-50/60 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                      transaction.amount > 0
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {transaction.amount > 0 ? "+" : ""}
-                    {transaction.amount.toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <Alert className="bg-gray-50 border-gray-200">
-            <AlertCircle className="h-4 w-4 text-gray-600" />
-            <AlertTitle className="text-gray-700">No Transactions</AlertTitle>
-            <AlertDescription className="text-gray-600">
-              Your transaction history will appear here once you start receiving
-              payments.
-            </AlertDescription>
-          </Alert>
-        )}
-      </div>
+                    {transaction.amount > 0 ? (
+                      <ArrowDownToLine className="h-4 w-4" />
+                    ) : (
+                      <TrendingUp className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-800">
+                      {transaction.description}
+                    </p>
+                    <p className="text-xs text-slate-400">{transaction.date}</p>
+                  </div>
+                </div>
+                <span
+                  className={`text-sm font-semibold tabular-nums ${
+                    transaction.amount > 0
+                      ? "text-emerald-600"
+                      : "text-slate-700"
+                  }`}
+                >
+                  {transaction.amount > 0 ? "+" : ""}
+                  {transaction.amount.toFixed(2)}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-14">
+              <p className="text-sm font-medium text-slate-700">
+                No transactions yet
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Your payout history will show up here.
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

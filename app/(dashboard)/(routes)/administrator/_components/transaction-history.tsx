@@ -154,27 +154,25 @@ export const TransactionHistory = ({
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-blue-500" />
-            <CardTitle>Transaction History</CardTitle>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4 max-h-[400px] overflow-y-auto">
+    <div>
+      <div className="flex items-center gap-2.5 p-5 border-b border-slate-100">
+        <History className="h-4 w-4 text-slate-400" />
+        <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+          Transaction History
+        </h2>
+      </div>
+      <div className="p-5 space-y-3 max-h-[440px] overflow-y-auto">
         {initialTransactions.map((transaction) => (
           <div
             key={transaction.id}
-            className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors"
+            className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200/70 hover:border-slate-300 hover:bg-slate-50/50 transition-colors"
           >
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3.5">
               <div
-                className={`p-2 rounded-full ${
+                className={`w-9 h-9 rounded-lg flex items-center justify-center ${
                   transaction.type === "withdrawal"
-                    ? "bg-red-100 text-red-600"
-                    : "bg-green-100 text-green-600"
+                    ? "bg-rose-50 text-rose-600"
+                    : "bg-emerald-50 text-emerald-600"
                 }`}
               >
                 {transaction.type === "withdrawal" ? (
@@ -184,22 +182,22 @@ export const TransactionHistory = ({
                 )}
               </div>
               <div>
-                <p className="font-medium">
+                <p className="text-sm font-medium text-slate-800">
                   {transaction.type === "withdrawal"
                     ? "Withdrawal Request"
                     : "Course Purchase"}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-slate-400">
                   {format(new Date(transaction.createdAt), "PPP")}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <p
-                className={`font-medium ${
+                className={`text-sm font-semibold tabular-nums ${
                   transaction.type === "withdrawal"
-                    ? "text-red-600"
-                    : "text-green-600"
+                    ? "text-rose-600"
+                    : "text-emerald-600"
                 }`}
               >
                 {transaction.type === "withdrawal" ? "-" : "+"}
@@ -208,6 +206,7 @@ export const TransactionHistory = ({
               <Button
                 variant="ghost"
                 size="sm"
+                className="rounded-lg"
                 onClick={() => setSelectedTransaction(transaction)}
               >
                 <Eye className="h-4 w-4" />
@@ -215,7 +214,7 @@ export const TransactionHistory = ({
             </div>
           </div>
         ))}
-      </CardContent>
+      </div>
 
       <Sheet
         open={!!selectedTransaction}
@@ -240,6 +239,6 @@ export const TransactionHistory = ({
           </div>
         </SheetContent>
       </Sheet>
-    </Card>
+    </div>
   );
 };

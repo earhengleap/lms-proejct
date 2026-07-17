@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, LogOut, LogIn } from "lucide-react";
+import { GraduationCap, LogOut, LogIn, Search, X } from "lucide-react";
 import Link from "next/link";
 import {
   useAuth,
@@ -12,7 +12,6 @@ import {
   ClerkLoading,
   useUser,
 } from "@clerk/nextjs";
-import SearchInput from "./search-input";
 import Notifications from "./notifications";
 import { Logo } from "@/app/(dashboard)/_components/logo";
 import Modal from "./modal";
@@ -22,16 +21,10 @@ const handleBecomeInstructor = async () => {
   try {
     const response = await fetch("/api/be-instructor", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to update instructor status");
-    }
-
-    window.location.href = "/teacher/courses";
+    if (!response.ok) throw new Error("Failed to update instructor status");
+    window.location.href = "/teacher/analytics";
   } catch (error) {
     console.error("Error becoming instructor:", error);
   }
@@ -42,11 +35,7 @@ const fetchInstructorStatus = async () => {
     const response = await fetch("/api/get-instructor-status", {
       method: "GET",
     });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch instructor status");
-    }
-
+    if (!response.ok) throw new Error("Failed to fetch instructor status");
     const data = await response.json();
     return data.isInstructor;
   } catch (error) {
@@ -57,16 +46,72 @@ const fetchInstructorStatus = async () => {
 
 const checkAndCreateUser = async () => {
   try {
-    const response = await fetch("/api/check-user", {
-      method: "POST",
-    });
-
-    if (!response.ok) {
-      console.error("Failed to check or create user.");
-    }
+    const response = await fetch("/api/check-user", { method: "POST" });
+    if (!response.ok) console.error("Failed to check or create user.");
   } catch (error) {
     console.error("Error:", error);
   }
+};
+
+const NavbarSearch = () => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const currentQuery = searchParams.get("q") || "";
+  const [query, setQuery] = useState(currentQuery);
+
+  const isSearchPage = pathname === "/search";
+
+  const updateQuery = useCallback(
+    (value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set("q", value);
+      } else {
+        params.delete("q");
+      }
+      params.delete("page");
+
+      const url = `/search?${params.toString()}`;
+      router.replace(url);
+    },
+    [router, searchParams]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    updateQuery(value);
+  };
+
+  const handleClear = () => {
+    setQuery("");
+    updateQuery("");
+  };
+
+  return (
+    <div className="hidden lg:flex items-center flex-1 max-w-md mx-6">
+      <div className="relative w-full group">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-sky-500 transition-colors pointer-events-none" />
+        <input
+          type="text"
+          value={query}
+          onChange={handleChange}
+          placeholder="Search courses..."
+          className="w-full h-9 pl-9 pr-8 text-sm bg-slate-50 border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 transition-all duration-200"
+        />
+        {query && (
+          <button
+            onClick={handleClear}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-slate-200 hover:bg-slate-300 text-slate-500 hover:text-slate-700 transition-colors"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const NavbarRoutes = () => {
@@ -79,28 +124,25 @@ const NavbarRoutes = () => {
 
   const isTeacherPage = pathname?.startsWith("/teach");
   const isCoursePage = pathname?.includes("/courses");
-  const isSearchPage = pathname?.startsWith("/search");
 
   useEffect(() => {
     if (isSignedIn) {
       checkAndCreateUser();
-      fetchInstructorStatus().then((status) => {
-        setIsInstructor(status);
-      });
+      fetchInstructorStatus().then((status) => setIsInstructor(status));
     }
   }, [isSignedIn]);
-
-  const handleInstructorButtonClick = () => {
-    if (isInstructor) {
-      router.push("/teacher/courses");
-    } else {
-      setIsInstructorModalOpen(true);
-    }
-  };
 
   const handleConfirmBecomingInstructor = () => {
     handleBecomeInstructor();
     setIsInstructorModalOpen(false);
+  };
+
+  const handleInstructorButtonClick = () => {
+    if (isInstructor) {
+      router.push("/teacher/analytics");
+    } else {
+      setIsInstructorModalOpen(true);
+    }
   };
 
   const textVariants = {
@@ -117,44 +159,43 @@ const NavbarRoutes = () => {
 
   return (
     <>
-      <div className="flex w-full items-center justify-between gap-x-4">
+      <div className="flex w-full items-center justify-between">
         <div className="flex-shrink-0">
-          <Link href={"/"}>
+          <Link href="/">
             <Logo />
           </Link>
         </div>
 
-        <div className="hidden lg:flex flex-1 justify-center">
-          {isSearchPage && (
-            <div className="w-full max-w-lg">
-              <SearchInput />
-            </div>
-          )}
-        </div>
+        <NavbarSearch />
 
-        <div className="flex items-center gap-x-4">
+        <div className="flex items-center gap-2">
           {isTeacherPage || isCoursePage ? (
-            <Link href={"/"}>
-              <Button size="sm" variant="ghost">
-                <LogOut className="h-4 w-4 mr-2" />
+            <Link href="/">
+              <Button size="sm" variant="ghost" className="text-slate-600">
+                <LogOut className="h-4 w-4 mr-1.5" />
                 Exit
               </Button>
             </Link>
           ) : isSignedIn ? (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleInstructorButtonClick}
-            >
-              <GraduationCap className="mr-2 w-7 h-7" />
-              {isInstructor ? "Instructor Dashboard" : "Be Instructor"}
-            </Button>
+            <>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-slate-600"
+                onClick={handleInstructorButtonClick}
+              >
+                <GraduationCap className="h-4 w-4 mr-1.5" />
+                <span className="hidden sm:inline">
+                  {isInstructor ? "Instructor Dashboard" : "Be Instructor"}
+                </span>
+              </Button>
+            </>
           ) : null}
 
           {isSignedIn && user && <Notifications userId={user.id} />}
 
           <ClerkLoading>
-            <div className="h-6 w-6 rounded-full animate-spin border-4 border-gray-300 border-t-transparent"></div>
+            <div className="h-6 w-6 rounded-full animate-spin border-2 border-slate-200 border-t-sky-500" />
           </ClerkLoading>
 
           <ClerkLoaded>
@@ -162,9 +203,9 @@ const NavbarRoutes = () => {
               <UserButton />
             ) : (
               <Link href="/sign-in" passHref>
-                <Button type="button" variant="outline">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Login
+                <Button size="sm" variant="ghost" className="text-slate-600">
+                  <LogIn className="h-4 w-4 mr-1.5" />
+                  Sign in
                 </Button>
               </Link>
             )}
@@ -194,24 +235,13 @@ const NavbarRoutes = () => {
         </div>
 
         <motion.button
-          whileHover={{
-            scale: 1.05,
-            background: "linear-gradient(90deg, #4FACFE, #00F2FE)",
-            transition: { duration: 0.3 },
-          }}
-          whileTap={{
-            scale: 0.95,
-            background: "linear-gradient(90deg, #4FACFE, #00F2FE)",
-            transition: { duration: 0.2 },
-          }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
           onClick={handleConfirmBecomingInstructor}
-          className="w-full py-2 px-4 text-white font-semibold rounded-md shadow-lg"
-          style={{
-            background: "linear-gradient(90deg, #4FACFE, #00F2FE)",
-          }}
+          className="w-full py-2 px-4 text-white font-medium rounded-md bg-sky-500 hover:bg-sky-600 transition-colors"
         >
           Continue
         </motion.button>

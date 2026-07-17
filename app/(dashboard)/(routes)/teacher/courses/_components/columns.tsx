@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Course, Chapter } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import { ArrowUpDown, MoreHorizontal, Pencil } from "lucide-react";
@@ -11,13 +10,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { convertUSDToKHR, formatPrice } from "@/lib/format";
 
 interface CourseWithDeletionStatus extends Course {
   deletionStatus: string | null;
-  chapters: ChapterWithDeletionStatus[]; // Include chapters with deletion status
+  chapters: ChapterWithDeletionStatus[];
 }
 
 interface ChapterWithDeletionStatus extends Chapter {
@@ -29,13 +27,20 @@ export const columns: ColumnDef<CourseWithDeletionStatus>[] = [
     accessorKey: "title",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
+        <button
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="flex items-center gap-1.5 hover:text-slate-700 transition-colors"
         >
           Title
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </button>
+      );
+    },
+    cell: ({ row }) => {
+      return (
+        <span className="font-medium text-slate-900">
+          {row.getValue("title")}
+        </span>
       );
     },
   },
@@ -43,69 +48,87 @@ export const columns: ColumnDef<CourseWithDeletionStatus>[] = [
     accessorKey: "price",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
+        <button
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="flex items-center gap-1.5 hover:text-slate-700 transition-colors"
         >
           Price
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </button>
       );
     },
     cell: ({ row }) => {
       const price = parseFloat(row.getValue("price") || "0");
       const usdPrice = formatPrice(price);
       const khrPrice = convertUSDToKHR(price);
-      return <div>{`${usdPrice} ≈ ${khrPrice}`}</div>;
+      return (
+        <span className="text-slate-600">
+          {usdPrice} <span className="text-slate-400">≈</span> {khrPrice}
+        </span>
+      );
     },
   },
   {
     accessorKey: "isPublished",
     header: ({ column }) => {
       return (
-        <Button
-          variant="ghost"
+        <button
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="flex items-center gap-1.5 hover:text-slate-700 transition-colors"
         >
-          Published
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+          Status
+          <ArrowUpDown className="h-3.5 w-3.5" />
+        </button>
       );
     },
     cell: ({ row }) => {
       const isPublished = row.getValue("isPublished") || false;
       return (
-        <Badge className={cn("bg-slate-500", isPublished && "bg-sky-700")}>
+        <span
+          className={cn(
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            isPublished
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-slate-100 text-slate-600"
+          )}
+        >
           {isPublished ? "Published" : "Draft"}
-        </Badge>
+        </span>
       );
     },
   },
   {
     accessorKey: "deletionStatus",
-    header: "Deletion Status",
+    header: "Deletion",
     cell: ({ row }) => {
       const courseDeletionStatus = row.getValue("deletionStatus");
       const chapters = row.original.chapters;
 
-      // Check course-level deletion status
       if (courseDeletionStatus === "pending") {
-        return <Badge className="bg-yellow-500">Course Pending Deletion</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+            Course Pending
+          </span>
+        );
       }
 
-      // Check chapter-level deletion status
       const hasChapterPendingDeletion = chapters.some(
         (chapter) => chapter.deletionStatus === "pending"
       );
 
       if (hasChapterPendingDeletion) {
         return (
-          <Badge className="bg-yellow-500">Chapter Pending Deletion</Badge>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
+            Chapter Pending
+          </span>
         );
       }
 
-      // Default message when no deletion request
-      return <Badge className="bg-green-500">No Deletion Requested</Badge>;
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-50 text-slate-500">
+          None
+        </span>
+      );
     },
   },
   {
@@ -119,15 +142,17 @@ export const columns: ColumnDef<CourseWithDeletionStatus>[] = [
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+            <button className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors">
               <MoreHorizontal className="h-4 w-4" />
-            </Button>
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+          <DropdownMenuContent
+            align="end"
+            className="w-40 rounded-xl border border-slate-200/60 shadow-lg"
+          >
             <Link href={`/teacher/courses/${id}`}>
-              <DropdownMenuItem>
-                <Pencil className="h-4 w-4 mr-2" />
+              <DropdownMenuItem className="gap-2 cursor-pointer">
+                <Pencil className="h-3.5 w-3.5" />
                 {deletionStatus === "pending" || hasChapterPendingDeletion
                   ? "View"
                   : "Edit"}

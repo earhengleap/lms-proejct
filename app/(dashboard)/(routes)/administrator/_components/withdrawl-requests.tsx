@@ -291,25 +291,29 @@ export const WithdrawalRequests = ({
 
   if (requests.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-        <AlertCircle className="h-12 w-12 mb-2 text-muted-foreground/50" />
-        <p>No pending withdrawal requests</p>
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+          <AlertCircle className="h-5 w-5 text-slate-400" />
+        </div>
+        <p className="text-sm font-medium text-slate-600">
+          No pending withdrawal requests
+        </p>
       </div>
     );
   }
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {requests.map((request) => (
           <div
             key={request.id}
-            className="flex flex-col space-y-4 p-4 border rounded-lg hover:shadow-md transition-all duration-200"
+            className="flex flex-col space-y-4 p-4 rounded-xl border border-slate-200/70 hover:border-slate-300 hover:bg-slate-50/50 transition-all duration-200"
           >
             <div className="flex justify-between items-start">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-lg">
+                  <p className="font-semibold text-lg text-slate-900 tabular-nums">
                     {new Intl.NumberFormat("en-US", {
                       style: "currency",
                       currency: "USD",
@@ -317,24 +321,24 @@ export const WithdrawalRequests = ({
                   </p>
                   <Badge
                     variant="secondary"
-                    className="bg-yellow-100 text-yellow-800"
+                    className="bg-amber-50 text-amber-700 border border-amber-200"
                   >
                     Pending
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-slate-500">
                   Publisher: {request.publisher.name || "Unknown"}
                 </p>
                 <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-slate-500">
                     Bank: {request.bankAccount.bankName}
                   </p>
-                  <span className="text-muted-foreground">•</span>
-                  <p className="text-sm font-mono text-muted-foreground">
+                  <span className="text-slate-300">•</span>
+                  <p className="text-sm font-mono text-slate-500">
                     {request.bankAccount.accountNumber}
                   </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-slate-400">
                   Requested: {format(new Date(request.createdAt), "PPP")}
                 </p>
               </div>
@@ -345,7 +349,7 @@ export const WithdrawalRequests = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-[100px] justify-center"
+                      className="w-[100px] justify-center rounded-lg"
                       onClick={() => setSelectedRequest(request)}
                     >
                       <Eye className="h-4 w-4 mr-2" />
@@ -383,7 +387,7 @@ export const WithdrawalRequests = ({
                       setShowConfirmDialog(true);
                     }}
                     disabled={isLoading === request.id}
-                    className="w-[100px] justify-center"
+                    className="w-[100px] justify-center rounded-lg text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 border-emerald-200"
                   >
                     {isLoading === request.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -396,7 +400,7 @@ export const WithdrawalRequests = ({
                   </Button>
                   <Button
                     size="sm"
-                    variant="destructive"
+                    variant="outline"
                     onClick={() => {
                       setSelectedAction({
                         id: request.id,
@@ -406,7 +410,7 @@ export const WithdrawalRequests = ({
                       setShowConfirmDialog(true);
                     }}
                     disabled={isLoading === request.id}
-                    className="w-[100px] justify-center"
+                    className="w-[100px] justify-center rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
                   >
                     {isLoading === request.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

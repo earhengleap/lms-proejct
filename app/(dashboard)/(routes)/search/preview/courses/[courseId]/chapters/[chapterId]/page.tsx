@@ -53,7 +53,6 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
             },
           },
         },
-        muxData: true,
       },
     });
   } catch (error) {
@@ -106,7 +105,7 @@ const ChapterIdPage = async ({ params }: ChapterIdPageProps) => {
               title={chapter.course.title}
               courseId={courseId}
               nextChapterId={nextChapter?.id}
-              playbackId={chapter.muxData?.playbackId!}
+              videoUrl={chapter.videoUrl}
               isLocked={isLocked && !hasPurchased}
               completedOnEnd={
                 hasPurchased && !!userId && !userProgress?.isCompleted

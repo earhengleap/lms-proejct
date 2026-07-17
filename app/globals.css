@@ -104,6 +104,15 @@ body,
     animation: spin-once 1s ease-in-out;
   }
 
+  @keyframes spin-once {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   @keyframes fadeIn {
     from {
       opacity: 0;

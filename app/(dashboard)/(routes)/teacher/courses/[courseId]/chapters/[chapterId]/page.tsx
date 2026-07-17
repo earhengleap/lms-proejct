@@ -3,7 +3,14 @@
 import { IconBadge } from "@/components/icon-badge";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { ArrowLeft, Eye, LayoutDashboard, Video } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Eye,
+  LayoutDashboard,
+  Video,
+} from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import ChapterTitleForm from "./_components/chapter-title-form";
@@ -32,7 +39,6 @@ const ChapterIdPage = async ({
       courseId: params.courseId,
     },
     include: {
-      muxData: true,
       quizzes: {
         include: {
           questions: {
@@ -74,12 +80,20 @@ const ChapterIdPage = async ({
   const completionText = `(${completedFields}/${totalFields})`;
 
   const isComplete = requireFields.every(Boolean);
+  const progress = Math.round((completedFields / totalFields) * 100);
 
   // Separate quizzes by type for better organization
   const automaticQuiz = chapter.quizzes.find(
     (quiz) => quiz.type === "automatic"
   );
   const manualQuiz = chapter.quizzes.find((quiz) => quiz.type === "manual");
+
+  const checklist = [
+    { label: "Chapter title", done: !!chapter.title },
+    { label: "Description", done: !!chapter.description },
+    { label: "Video", done: !!chapter.videoUrl },
+    { label: "Quiz", done: chapter.quizzes.length > 0 },
+  ];
 
   return (
     <>
@@ -89,79 +103,129 @@ const ChapterIdPage = async ({
           label="This chapter is not published yet. It will not be visible in the course."
         />
       )}
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="w-full">
-            <Link
-              href={`/teacher/courses/${params.courseId}`}
-              className="flex items-center text-sm hover:opacity-75 transition mb-6"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to course setup
-            </Link>
-            <div className="flex items-center justify-between w-full">
-              <div className="flex flex-col gap-y-2">
-                <h1 className="text-2xl font-medium">Chapter Creation</h1>
-                <span className="text-sm text-slate-700">
-                  Complete all fields {completionText}
-                </span>
+      <div className="px-6 py-8 max-w-[1400px] mx-auto">
+        <Link
+          href={`/teacher/courses/${params.courseId}`}
+          className="flex items-center text-sm text-slate-500 hover:text-slate-800 transition mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to course setup
+        </Link>
+
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col gap-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Chapter setup
+            </h1>
+            <span className="text-sm text-slate-500">
+              Complete all fields {completionText}
+            </span>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="h-1.5 w-48 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-sky-500 transition-all duration-500"
+                  style={{ width: `${progress}%` }}
+                />
               </div>
-              <ChapterActions
-                disabled={!isComplete}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-                isPublished={chapter.isPublished}
-                initialPendingStatus={initialPendingStatus}
-              />
+              <span className="text-xs font-medium text-slate-400">
+                {progress}%
+              </span>
             </div>
           </div>
+          <ChapterActions
+            disabled={!isComplete}
+            courseId={params.courseId}
+            chapterId={params.chapterId}
+            isPublished={chapter.isPublished}
+            initialPendingStatus={initialPendingStatus}
+          />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={LayoutDashboard} />
-                <h2 className="text-xl">Customize your chapter</h2>
+
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="space-y-6">
+            <section className="rounded-2xl border border-slate-200/70 bg-white p-5">
+              <div className="mb-4 flex items-center gap-x-2">
+                <IconBadge icon={LayoutDashboard} variant="slate" />
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Customize your chapter
+                </h2>
               </div>
-              <ChapterTitleForm
-                initialData={chapter}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-              />
-              <ChapterDescriptionForm
-                initialData={chapter}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-              />
-              <QuizTabs
-                automaticQuiz={automaticQuiz || null}
-                manualQuiz={manualQuiz || null}
-                courseId={params.courseId}
-                chapterId={params.chapterId}
-              />
-            </div>
-            <div>
-              <div className="flex items-center gap-x-2">
+              <div className="space-y-4">
+                <ChapterTitleForm
+                  initialData={chapter}
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+                <ChapterDescriptionForm
+                  initialData={chapter}
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+                <QuizTabs
+                  automaticQuiz={automaticQuiz || null}
+                  manualQuiz={manualQuiz || null}
+                  courseId={params.courseId}
+                  chapterId={params.chapterId}
+                />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200/70 bg-white p-5">
+              <div className="mb-4 flex items-center gap-x-2">
                 <IconBadge icon={Eye} />
-                <h2 className="text-xl">Access Settings</h2>
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Access settings
+                </h2>
               </div>
               <ChapterAccessForm
                 initialData={chapter}
                 courseId={params.courseId}
                 chapterId={params.chapterId}
               />
-            </div>
+            </section>
           </div>
-          <div>
-            <div className="flex items-center gap-x-2">
-              <IconBadge icon={Video} />
-              <h2 className="text-2xl">Add a video</h2>
-            </div>
-            <ChapterVideoForm
-              initialData={chapter}
-              chapterId={params.chapterId}
-              courseId={params.courseId}
-            />
+
+          <div className="space-y-6">
+            <section className="rounded-2xl border border-slate-200/70 bg-white p-5">
+              <div className="mb-4 flex items-center gap-x-2">
+                <IconBadge icon={Video} variant="success" />
+                <h2 className="text-lg font-semibold text-slate-800">
+                  Add a video
+                </h2>
+              </div>
+              <ChapterVideoForm
+                initialData={chapter}
+                chapterId={params.chapterId}
+                courseId={params.courseId}
+              />
+            </section>
+
+            <section className="rounded-2xl border border-slate-200/70 bg-white p-5">
+              <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-400">
+                Completion checklist
+              </h3>
+              <ul className="space-y-3">
+                {checklist.map((item) => (
+                  <li
+                    key={item.label}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    {item.done ? (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-slate-300" />
+                    )}
+                    <span
+                      className={
+                        item.done ? "text-slate-700" : "text-slate-400"
+                      }
+                    >
+                      {item.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
           </div>
         </div>
       </div>

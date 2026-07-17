@@ -1,21 +1,17 @@
-//app/(dashboard)/_components/navbar.tsx
-
 import NavbarRoutes from "@/components/navbar-routes";
 import MobileSidebar from "./mobile-sidebar";
 
 const Navbar = () => {
   return (
-    <div className="p-4 sm:p-6 h-full flex items-center bg-white border-b justify-between">
-      {/* Left Side - Mobile Sidebar and Logo for small screens */}
+    <div className="h-full flex items-center px-4 sm:px-6 bg-white/80 backdrop-blur-md border-b border-slate-200/80">
       <div className="flex items-center gap-x-4">
         <MobileSidebar />
       </div>
-
-      {/* NavbarRoutes will handle the logo, search, and user navigation */}
       <div className="flex-1">
         <NavbarRoutes />
       </div>
     </div>
   );
 };
+
 export default Navbar;

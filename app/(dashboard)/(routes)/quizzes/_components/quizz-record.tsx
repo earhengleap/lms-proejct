@@ -1,4 +1,3 @@
-import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { PrismaClient } from "@prisma/client";
 import getUserMetrics from "@/actions/get-user-metrics";
@@ -20,7 +19,7 @@ interface CourseQuizSummary {
   courseImageUrl: string;
   quizCount: number;
   totalScore: number;
-  category: string; // This will store the category name
+  category: string;
 }
 
 export const QuizzRecord = async ({
@@ -33,7 +32,6 @@ export const QuizzRecord = async ({
     return <div>User not found</div>;
   }
 
-  // Fetch all quizzes for the user with scores
   const userQuizzes = await prisma.quizSubmission.findMany({
     where: {
       userId: userId,
@@ -57,13 +55,12 @@ export const QuizzRecord = async ({
     },
   });
 
-  // Group quizzes by course
   const courseQuizzes = userQuizzes.reduce(
     (acc, submission) => {
-      const courseId = submission.quiz.course.id;
-      if (!acc[courseId]) {
-        acc[courseId] = {
-          courseId: courseId,
+      const cid = submission.quiz.course.id;
+      if (!acc[cid]) {
+        acc[cid] = {
+          courseId: cid,
           courseTitle: submission.quiz.course.title,
           courseImageUrl:
             submission.quiz.course.imageUrl || "/placeholder-image.jpg",
@@ -78,8 +75,8 @@ export const QuizzRecord = async ({
                 : "Uncategorized",
         };
       }
-      acc[courseId].quizCount += 1;
-      acc[courseId].totalScore += submission.score;
+      acc[cid].quizCount += 1;
+      acc[cid].totalScore += submission.score;
       return acc;
     },
     {} as Record<string, CourseQuizSummary>
@@ -89,8 +86,8 @@ export const QuizzRecord = async ({
   const heatMapData: HeatMapDataPoint[] = await getHeatMapData();
 
   return (
-    <div className="space-y-6">
-      {/* User Metrics */}
+    <div className="space-y-8">
+      {/* Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {userData && userData.length > 0
           ? userData
@@ -110,43 +107,48 @@ export const QuizzRecord = async ({
       </div>
 
       {/* HeatMap */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">
-          Quiz Submission Activity
+      <div className="bg-white rounded-2xl border border-slate-200/60 p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          Activity
         </h2>
         <div className="w-full h-64 flex items-center justify-center">
           {heatMapData && heatMapData.length > 0 ? (
             <UserHeatMap data={heatMapData} />
           ) : (
-            <p className="text-gray-500 text-center font-medium">
-              No activity data available.
+            <p className="text-sm text-slate-400 text-center">
+              No activity data yet.
             </p>
           )}
         </div>
       </div>
 
-      {/* Quizzes Cards */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-2xl font-semibold mb-4">Your Quiz Submissions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Object.values(courseQuizzes).map((course) => (
-            <QuizzCard
-              key={course.courseId}
-              courseId={course.courseId}
-              courseTitle={course.courseTitle}
-              courseImageUrl={course.courseImageUrl}
-              quizCount={course.quizCount}
-              averageScore={course.totalScore / course.quizCount}
-              category={course.category}
-            />
-          ))}
-        </div>
+      {/* Quiz Cards */}
+      <div>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">
+          Quiz Submissions
+        </h2>
+        {Object.values(courseQuizzes).length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Object.values(courseQuizzes).map((course) => (
+              <QuizzCard
+                key={course.courseId}
+                courseId={course.courseId}
+                courseTitle={course.courseTitle}
+                courseImageUrl={course.courseImageUrl}
+                quizCount={course.quizCount}
+                averageScore={course.totalScore / course.quizCount}
+                category={course.category}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-400 text-center py-10">
+            No quiz submissions yet.
+          </p>
+        )}
       </div>
     </div>
   );
 };
 
 export default QuizzRecord;
-
-
-//this an old code

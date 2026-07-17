@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { auth } from "@clerk/nextjs/server";
-
-const prisma = new PrismaClient();
+import { db } from "@/lib/db";
 
 export interface HeatMapDataPoint {
   date: string;
@@ -15,20 +13,25 @@ const getHeatMapData = async (): Promise<HeatMapDataPoint[]> => {
     return [];
   }
 
-  const data = await prisma.quizSubmission.groupBy({
-    by: ['createdAt'],
-    _count: {
-      id: true,
-    },
-    where: {
-      userId: userId  // Only get submissions for the current user
-    }
-  });
+  try {
+    const data = await db.quizSubmission.groupBy({
+      by: ['createdAt'],
+      _count: {
+        id: true,
+      },
+      where: {
+        userId: userId  // Only get submissions for the current user
+      }
+    });
 
-  return data.map(item => ({
-    date: item.createdAt.toISOString().split('T')[0], // Format date as YYYY-MM-DD
-    count: item._count.id
-  }));
+    return data.map(item => ({
+      date: item.createdAt.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+      count: item._count.id
+    }));
+  } catch (error) {
+    console.error("Failed to load heat map data:", error);
+    return [];
+  }
 };
 
 export default getHeatMapData;

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Pencil, Loader2, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { UploadDropzone } from "@/lib/uploadthing";
+import { UploadDropzone } from "@/lib/uploadthing-client";
 import Image from "next/image";
 
 interface BankAccount {
@@ -184,7 +184,7 @@ const EditBankDialog = ({ bankAccount, onSuccess }: EditBankDialogProps) => {
             ) : (
               <UploadDropzone
                 endpoint="bankQrCode"
-                onClientUploadComplete={(res) => {
+                onClientUploadComplete={(res: { url: string }[]) => {
                   setQrCodeUrl(res?.[0]?.url);
                   toast({
                     title: "Success",

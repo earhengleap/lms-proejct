@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Course } from "@prisma/client";
 import Image from "next/image";
-import { FileUpload } from "@/components/file-upload";
+import { CourseImageUpload } from "@/components/course-image-upload";
 
 interface ImageFormProps {
   initialData: Course;
@@ -41,7 +41,7 @@ const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-5">
       <div className="font-medium flex items-center justify-between">
         Course image
         <Button onClick={toggleEdit} variant={"ghost"}>
@@ -77,16 +77,17 @@ const ImageForm = ({ initialData, courseId }: ImageFormProps) => {
         ))}
       {isEditing && (
         <div>
-          <FileUpload
+          <CourseImageUpload
             endpoint="courseImage"
+            value={initialData.imageUrl || undefined}
             onChange={(url) => {
               if (url) {
                 onSubmit({ imageUrl: url });
               }
             }}
           />
-          <div className="text-xs text-muted-forground mt-4">
-            16:9 aspect ratio recommended
+          <div className="text-xs text-muted-foreground mt-4">
+            Free-form crop — drag to reposition, use the slider to zoom.
           </div>
         </div>
       )}

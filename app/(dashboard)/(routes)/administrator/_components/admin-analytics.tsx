@@ -1,7 +1,11 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,37 +14,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  LineChart,
-  Line,
-  AreaChart,
   Area,
-  BarChart,
+  AreaChart,
   Bar,
+  BarChart,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  Radar,
-  RadialBarChart,
-  RadialBar,
 } from "recharts";
 import { useState } from "react";
-import {
-  LineChart as LineChartIcon,
-  TrendingUp,
-  PieChart as PieChartIcon,
-  BarChart3,
-  Circle,
-} from "lucide-react";
+import { TrendingUp, BarChart3, PieChart as PieChartIcon } from "lucide-react";
 
 interface AnalyticsData {
   revenue: {
@@ -62,255 +50,213 @@ interface AdminAnalyticsProps {
   data: AnalyticsData;
 }
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+const CHART_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white border border-slate-200/60 rounded-xl shadow-lg px-3 py-2">
+        <p className="text-sm font-semibold text-slate-900 mb-1">{label}</p>
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center gap-2">
+            <div
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: entry.color || entry.fill }}
+            />
+            <span className="text-xs text-slate-600">
+              {entry.name}:{" "}
+              {typeof entry.value === "number"
+                ? `$${entry.value.toLocaleString()}`
+                : entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
 
 export const AdminAnalytics = ({ data }: AdminAnalyticsProps) => {
   const [timeRange, setTimeRange] = useState("monthly");
   const [chartType, setChartType] = useState("revenue");
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background/80 backdrop-blur-sm border rounded-lg shadow-lg p-3">
-          <p className="font-medium text-sm">{label}</p>
-          {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: entry.color }}
-              />
-              <span className="text-sm font-medium text-muted-foreground">
-                {entry.name}:{" "}
-                {typeof entry.value === "number"
-                  ? chartType === "revenue"
-                    ? `$${entry.value.toLocaleString()}`
-                    : entry.value.toLocaleString()
-                  : entry.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
-
-  const renderRevenueChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <AreaChart
-        data={
-          timeRange === "monthly" ? data.revenue.monthly : data.revenue.daily
-        }
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <defs>
-          <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#0088FE" stopOpacity={0.8} />
-            <stop offset="95%" stopColor="#0088FE" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-        <XAxis
-          dataKey="date"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <YAxis
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-          tickFormatter={(value) => `$${value.toLocaleString()}`}
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Area
-          type="monotone"
-          dataKey="amount"
-          name="Revenue"
-          stroke="#0088FE"
-          fillOpacity={1}
-          fill="url(#colorRevenue)"
-          strokeWidth={2}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-
-  const renderPurchasesChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <BarChart
-        data={
-          timeRange === "monthly"
-            ? data.purchases.monthly
-            : data.purchases.daily
-        }
-        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-        <XAxis
-          dataKey="date"
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <YAxis
-          fontSize={12}
-          tickLine={false}
-          axisLine={false}
-          className="text-muted-foreground"
-        />
-        <Tooltip content={<CustomTooltip />} />
-        <Bar
-          dataKey="count"
-          name="Purchases"
-          fill="currentColor"
-          className="fill-primary"
-          radius={[4, 4, 0, 0]}
-        />
-      </BarChart>
-    </ResponsiveContainer>
-  );
-
-  const renderCategoryChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <PieChart>
-        <Pie
-          data={data.categoryDistribution}
-          cx="50%"
-          cy="50%"
-          innerRadius={80}
-          outerRadius={140}
-          fill="#8884d8"
-          paddingAngle={5}
-          dataKey="revenue"
-          label={({ name, value, percent }) =>
-            `${name} ($${value.toLocaleString()}, ${(percent * 100).toFixed(1)}%)`
-          }
-        >
-          {data.categoryDistribution.map((entry, index) => (
-            <Cell
-              key={`cell-${index}`}
-              fill={COLORS[index % COLORS.length]}
-              className="stroke-background hover:opacity-80"
-            />
-          ))}
-        </Pie>
-        <Tooltip content={<CustomTooltip />} />
-      </PieChart>
-    </ResponsiveContainer>
-  );
-
-  const renderRadialChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <RadialBarChart
-        innerRadius="10%"
-        outerRadius="80%"
-        data={data.categoryDistribution}
-        startAngle={180}
-        endAngle={-180}
-      >
-        <RadialBar
-          dataKey="revenue"
-          className="fill-primary"
-          background={{ className: "fill-muted" }}
-        />
-        <Tooltip content={<CustomTooltip />} />
-      </RadialBarChart>
-    </ResponsiveContainer>
-  );
-
-  const renderRadarChart = () => (
-    <ResponsiveContainer width="100%" height={400}>
-      <RadarChart
-        cx="50%"
-        cy="50%"
-        outerRadius="80%"
-        data={data.categoryDistribution}
-      >
-        <PolarGrid className="stroke-muted" />
-        <PolarAngleAxis
-          dataKey="category"
-          className="text-muted-foreground fill-muted-foreground"
-        />
-        <PolarRadiusAxis className="text-muted-foreground" />
-        <Radar
-          name="Revenue"
-          dataKey="revenue"
-          className="fill-primary/50 stroke-primary"
-        />
-        <Tooltip content={<CustomTooltip />} />
-      </RadarChart>
-    </ResponsiveContainer>
-  );
+  const revenueData =
+    timeRange === "monthly" ? data.revenue.monthly : data.revenue.daily;
+  const purchasesData =
+    timeRange === "monthly" ? data.purchases.monthly : data.purchases.daily;
 
   return (
-    <Card className="col-span-full">
-      <div className="p-6">
-        <header className="flex justify-between items-center mb-6">
-          <div className="flex items-center gap-3">
-            <LineChartIcon className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-semibold">Analytics Overview</h2>
+    <Card className="border-slate-200/70 rounded-2xl">
+      <CardHeader className="flex flex-row items-center justify-between gap-4 pb-2">
+        <CardTitle className="text-sm font-semibold text-slate-900 tracking-tight">
+          Analytics Overview
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {/* Chart type toggle */}
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+            <button
+              onClick={() => setChartType("revenue")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                chartType === "revenue"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              Revenue
+            </button>
+            <button
+              onClick={() => setChartType("purchases")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                chartType === "purchases"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              Sales
+            </button>
+            <button
+              onClick={() => setChartType("categories")}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                chartType === "categories"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <PieChartIcon className="h-3.5 w-3.5" />
+              Categories
+            </button>
           </div>
+
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Select range" />
+            <SelectTrigger className="w-[110px] h-9 rounded-xl border-slate-200/60 text-sm">
+              <SelectValue />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="daily" className="text-sm">Daily</SelectItem>
+              <SelectItem value="monthly" className="text-sm">Monthly</SelectItem>
             </SelectContent>
           </Select>
-        </header>
+        </div>
+      </CardHeader>
 
-        <Tabs defaultValue="revenue" className="w-full">
-          <TabsList>
-            <TabsTrigger
-              value="revenue"
-              onClick={() => setChartType("revenue")}
-            >
-              <TrendingUp className="h-4 w-4 mr-2" />
-              Revenue
-            </TabsTrigger>
-            <TabsTrigger
-              value="purchases"
-              onClick={() => setChartType("purchases")}
-            >
-              <BarChart3 className="h-4 w-4 mr-2" />
-              Purchases
-            </TabsTrigger>
-            <TabsTrigger
-              value="categories"
-              onClick={() => setChartType("categories")}
-            >
-              <PieChartIcon className="h-4 w-4 mr-2" />
-              Categories
-            </TabsTrigger>
-            <TabsTrigger value="radial" onClick={() => setChartType("radial")}>
-              <Circle className="h-4 w-4 mr-2" />
-              Radial
-            </TabsTrigger>
-            <TabsTrigger value="radar" onClick={() => setChartType("radar")}>
-              <Circle className="h-4 w-4 mr-2" />
-              Radar
-            </TabsTrigger>
-          </TabsList>
+      <CardContent>
+        <div className="bg-slate-50/50 rounded-xl p-4">
+          {chartType === "revenue" && (
+            <ResponsiveContainer width="100%" height={340}>
+              <AreaChart
+                data={revenueData}
+                margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#0088FE" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#0088FE" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  stroke="#94a3b8"
+                />
+                <YAxis
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  stroke="#94a3b8"
+                  tickFormatter={(v) => `$${v.toLocaleString()}`}
+                  width={60}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  name="Revenue"
+                  stroke="#0088FE"
+                  strokeWidth={2}
+                  fill="url(#revFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
 
-          <div className="mt-4">
-            <TabsContent value="revenue">{renderRevenueChart()}</TabsContent>
-            <TabsContent value="purchases">
-              {renderPurchasesChart()}
-            </TabsContent>
-            <TabsContent value="categories">
-              {renderCategoryChart()}
-            </TabsContent>
-            <TabsContent value="radial">{renderRadialChart()}</TabsContent>
-            <TabsContent value="radar">{renderRadarChart()}</TabsContent>
-          </div>
-        </Tabs>
-      </div>
+          {chartType === "purchases" && (
+            <ResponsiveContainer width="100%" height={340}>
+              <BarChart
+                data={purchasesData}
+                margin={{ top: 5, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="date"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  stroke="#94a3b8"
+                />
+                <YAxis
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  stroke="#94a3b8"
+                  width={40}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "#f1f5f9" }} />
+                <Bar
+                  dataKey="count"
+                  name="Sales"
+                  fill="#00C49F"
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={48}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+
+          {chartType === "categories" && (
+            <ResponsiveContainer width="100%" height={340}>
+              <PieChart>
+                <Pie
+                  data={data.categoryDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={70}
+                  outerRadius={110}
+                  fill="#0ea5e9"
+                  paddingAngle={3}
+                  dataKey="revenue"
+                  nameKey="category"
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                  labelLine={false}
+                >
+                  {data.categoryDistribution.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={CHART_COLORS[index % CHART_COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 };

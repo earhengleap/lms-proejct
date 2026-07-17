@@ -12,7 +12,7 @@ import ChapterAccessForm from "./chapter-access-form";
 import ChapterVideoForm from "./chapter-video-form";
 import { ChapterActions } from "./chapter-actions";
 import { Banner } from "@/components/banner";
-import { Chapter, MuxData, Quiz, Question, Answer } from "@prisma/client";
+import { Chapter, Quiz, Question, Answer } from "@prisma/client";
 import { QuizTabs } from "./quiz-tab";
 
 interface ExtendedQuiz extends Quiz {
@@ -25,7 +25,6 @@ interface ExtendedQuiz extends Quiz {
 
 interface ChapterIdClientProps {
   chapter: Chapter & {
-    muxData: MuxData | null;
     quizzes: Array<
       Quiz & {
         questions: Array<

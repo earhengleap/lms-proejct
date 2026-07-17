@@ -75,14 +75,15 @@ export const ChaptersList = ({
                     className={cn(
                       "flex items-center gap-x-2 bg-slate-200 border-slate-200 border text-slate-700 rounded-md mb-4 text-sm",
                       chapter.isPublished &&
-                        "bg-sky-100 border-sky-200 text-sky-700"
+                        "bg-sky-100 border-sky-200 text-sky-700",
+                      index === 0 && "ring-2 ring-emerald-300/70 border-emerald-300"
                     )}
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                   >
                     <div
                       className={cn(
-                        "px-2 py-3 border-r border-r-slate-200 hover:bg-slate-300 rounded-l-md transition",
+                        "px-2 py-3 border-r border-r-slate-200 hover:bg-slate-300 rounded-l-md transition cursor-grab active:cursor-grabbing",
                         chapter.isPublished &&
                           "border-r-sky-200 hover:bg-sky-200"
                       )}
@@ -90,9 +91,21 @@ export const ChaptersList = ({
                     >
                       <Grip className="h-5 w-5" />
                     </div>
-                    {chapter.title}
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                        index === 0
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-400 text-white"
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="truncate">{chapter.title}</span>
                     <div className="ml-auto pr-2 flex items-center gap-x-2">
-                      {chapter.isFree && <Badge>Free</Badge>}
+                      {chapter.isFree && (
+                        <Badge variant="secondary">Free</Badge>
+                      )}
                       <Badge
                         className={cn(
                           "bg-slate-500",

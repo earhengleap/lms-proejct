@@ -1,6 +1,7 @@
-// _components/course-performance.tsx
+"use client";
 
 import { BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface CourseData {
   title: string;
@@ -18,14 +19,13 @@ export const CoursePerformance: React.FC<CoursePerformanceProps> = ({
 
   if (isEmpty) {
     return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <BookOpen className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-600 dark:text-gray-400 mb-2">
-          No Course Data Available
-        </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-500 max-w-[250px]">
-          Start creating and publishing courses to see completion rates and
-          performance metrics here.
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center mb-3">
+          <BookOpen className="h-5 w-5 text-slate-400" />
+        </div>
+        <p className="text-sm font-medium text-slate-600">No course data yet</p>
+        <p className="text-xs text-slate-400 mt-0.5">
+          Publish courses to see performance metrics
         </p>
       </div>
     );
@@ -33,26 +33,39 @@ export const CoursePerformance: React.FC<CoursePerformanceProps> = ({
 
   return (
     <div className="space-y-4">
-      {data.map((course, index) => (
-        <div key={index} className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {course.title}
-            </span>
-            <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-              {(course.completionRate * 100).toFixed(1)}%
-            </span>
-          </div>
-          <div className="relative w-full">
-            <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-blue-500 dark:bg-blue-600 h-full rounded-full transition-all duration-300 ease-in-out"
-                style={{ width: `${course.completionRate * 100}%` }}
+      {data.map((course, index) => {
+        const percent = course.completionRate * 100;
+        return (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.05 }}
+            className="space-y-2"
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-slate-700 truncate max-w-[70%]">
+                {course.title}
+              </span>
+              <span className="text-sm font-semibold text-sky-600">
+                {percent.toFixed(1)}%
+              </span>
+            </div>
+            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${percent}%` }}
+                transition={{
+                  duration: 0.8,
+                  delay: index * 0.1,
+                  ease: "easeOut",
+                }}
+                className="bg-sky-500 h-full rounded-full"
               />
             </div>
-          </div>
-        </div>
-      ))}
+          </motion.div>
+        );
+      })}
     </div>
   );
 };

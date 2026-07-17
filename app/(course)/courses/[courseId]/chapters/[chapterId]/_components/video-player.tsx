@@ -1,7 +1,6 @@
 "use client";
 
 import axios from "axios";
-import MuxPlayer from "@mux/mux-player-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -12,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { useConfettiStore } from "@/hooks/use-confetti-store";
 
 interface VideoPlayerProps {
-  playbackId: string | null;
+  videoUrl: string | null;
   courseId: string;
   chapterId: string;
   nextChapterId?: string | null;
@@ -22,7 +21,7 @@ interface VideoPlayerProps {
 }
 
 export const VideoPlayer = ({
-  playbackId,
+  videoUrl,
   courseId,
   chapterId,
   nextChapterId,
@@ -61,14 +60,14 @@ export const VideoPlayer = ({
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-md shadow-lg">
+    <div className="relative w-full overflow-hidden rounded-md shadow-lg bg-slate-900">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative w-full h-0 pb-[56.25%]" // Maintain 16:9 ratio using padding-bottom
+        className="relative w-full aspect-video"
       >
-        {!isReady && !isLocked && (
+        {!isReady && !isLocked && videoUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
             <Loader2 className="h-8 w-8 animate-spin text-secondary" />
           </div>
@@ -81,20 +80,20 @@ export const VideoPlayer = ({
             </div>
           </div>
         )}
-        {!isLocked && playbackId && (
-          <MuxPlayer
-            title={title}
-            className={cn(
-              "absolute inset-0 w-full h-full",
-              !isReady && "hidden"
-            )}
+        {!isLocked && videoUrl && (
+          <video
+            src={videoUrl}
+            controls
+            playsInline
             onCanPlay={() => setIsReady(true)}
             onEnded={onEnd}
-            autoPlay
-            playbackId={playbackId}
+            className={cn(
+              "absolute inset-0 h-full w-full",
+              !isReady && "opacity-0"
+            )}
           />
         )}
-        {!isLocked && !playbackId && (
+        {!isLocked && !videoUrl && (
           <div className="absolute inset-0 flex items-center justify-center bg-slate-800 text-secondary">
             <p className="font-semibold">No video available</p>
           </div>

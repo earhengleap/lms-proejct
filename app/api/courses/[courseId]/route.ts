@@ -3,15 +3,7 @@
 import { db } from "@/lib/db";
 import { isAdministrator } from "@/lib/administrator";
 import { auth } from "@clerk/nextjs/server";
-import Mux from "@mux/mux-node";
 import { NextResponse } from "next/server";
-
-const muxConfig = {
-  tokenID: process.env.MUX_TOKEN_ID!,
-  tokenSecret: process.env.MUX_TOKEN_SECRET!,
-};
-
-const mux = new Mux(muxConfig);
 
 export async function DELETE(
   req: Request,
@@ -35,22 +27,12 @@ export async function DELETE(
         id: params.courseId,
       },
       include: {
-        chapters: {
-          include: {
-            muxData: true,
-          },
-        },
+        chapters: true,
       },
     });
 
     if (!course) {
       return new NextResponse("Not found", { status: 404 });
-    }
-
-    for (const chapter of course.chapters) {
-      if (chapter.muxData?.assetId) {
-        await mux.video.assets.delete(chapter.muxData.assetId);
-      }
     }
 
     const deletedCourse = await db.course.delete({

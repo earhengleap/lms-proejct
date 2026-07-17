@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2, Trophy } from "lucide-react";
 
 interface QuizzSubmissionProps {
   score: number;
@@ -15,25 +15,23 @@ const LoadingScreen = () => (
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="flex items-center justify-center min-h-screen bg-gray-100"
+    className="flex items-center justify-center min-h-screen bg-slate-50"
   >
-    <motion.div
-      animate={{ rotate: 360 }}
-      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-      className="w-16 h-16 border-4 border-gray-300 border-t-blue-600 rounded-full"
-    />
+    <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
   </motion.div>
 );
 
 const ScoreDisplay = ({ score }: { score: number }) => (
   <motion.div
-    initial={{ scale: 0.5, opacity: 0 }}
+    initial={{ scale: 0.6, opacity: 0 }}
     animate={{ scale: 1, opacity: 1 }}
-    transition={{ duration: 0.6, delay: 0.2 }}
+    transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
     className="text-center"
   >
-    <span className="text-7xl font-extrabold text-gray-800">{score}</span>
-    <span className="text-4xl font-bold text-gray-500">%</span>
+    <span className="text-7xl font-extrabold tracking-tight text-slate-900">
+      {score}
+    </span>
+    <span className="text-3xl font-bold text-slate-400">%</span>
   </motion.div>
 );
 
@@ -49,24 +47,24 @@ const ResultBar = ({
   color: string;
 }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 16 }}
     animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, delay: 0.4 }}
+    transition={{ duration: 0.5, delay: 0.35 }}
     className="w-full"
   >
-    <div className="flex justify-between mb-2">
-      <span className="text-sm font-medium text-gray-600">{label}</span>
-      <span className="text-sm font-medium text-gray-600">
+    <div className="flex justify-between mb-1.5">
+      <span className="text-sm font-medium text-slate-500">{label}</span>
+      <span className="text-sm font-medium text-slate-700">
         {value}/{total}
       </span>
     </div>
-    <div className="w-full bg-gray-300 rounded-full h-3">
+    <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
       <motion.div
-        className={`h-3 rounded-full ${color}`}
+        className={`h-2.5 rounded-full ${color}`}
         initial={{ width: 0 }}
         animate={{ width: `${(value / total) * 100}%` }}
-        transition={{ duration: 0.8, delay: 0.6 }}
-      ></motion.div>
+        transition={{ duration: 0.8, delay: 0.5, ease: "easeOut" }}
+      />
     </div>
   </motion.div>
 );
@@ -75,8 +73,8 @@ const FeedbackMessage = ({ score }: { score: number }) => (
   <motion.p
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
-    transition={{ duration: 0.6, delay: 0.8 }}
-    className="text-center text-gray-700 mt-6 text-lg font-semibold"
+    transition={{ duration: 0.6, delay: 0.7 }}
+    className="text-center text-slate-600 mt-6 text-base font-medium"
   >
     {score === 100
       ? "Perfect score! Outstanding performance."
@@ -92,71 +90,30 @@ const ContinueButton = ({ courseId }: { courseId: string }) => {
 
   const handleClick = () => {
     setIsLoading(true);
-    // Simulate loading time (remove this in production and replace with actual navigation)
     setTimeout(() => {
       router.push(`/quizzes/submissions/courses/${courseId}`);
-    }, 1500);
+    }, 600);
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 1 }}
+      transition={{ duration: 0.5, delay: 0.85 }}
       className="mt-10"
     >
       <button
         onClick={handleClick}
         disabled={isLoading}
-        className="w-full bg-blue-600 text-white py-3 px-5 rounded-lg hover:bg-blue-700 transition-colors duration-300 shadow-md flex items-center justify-center font-medium text-lg relative overflow-hidden"
+        className="w-full bg-slate-900 text-white py-3 px-5 rounded-xl hover:bg-slate-800 transition-colors duration-300 shadow-sm flex items-center justify-center font-medium text-base gap-2 disabled:opacity-70"
       >
-        <span className={`flex items-center ${isLoading ? "opacity-50" : ""}`}>
-          View Quiz Submissions
-          <ArrowRight className="ml-2 w-5 h-5" />
-        </span>
-        {isLoading && (
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.div
-              className="w-1.5 h-1.5 bg-white rounded-full mr-1"
-              animate={{
-                scale: [1, 1.5, 1],
-                transition: {
-                  repeat: Infinity,
-                  duration: 1,
-                  ease: "easeInOut",
-                },
-              }}
-            />
-            <motion.div
-              className="w-1.5 h-1.5 bg-white rounded-full mr-1"
-              animate={{
-                scale: [1, 1.5, 1],
-                transition: {
-                  repeat: Infinity,
-                  duration: 1,
-                  ease: "easeInOut",
-                  delay: 0.2,
-                },
-              }}
-            />
-            <motion.div
-              className="w-1.5 h-1.5 bg-white rounded-full"
-              animate={{
-                scale: [1, 1.5, 1],
-                transition: {
-                  repeat: Infinity,
-                  duration: 1,
-                  ease: "easeInOut",
-                  delay: 0.4,
-                },
-              }}
-            />
-          </motion.div>
+        {isLoading ? (
+          <Loader2 className="h-5 w-5 animate-spin" />
+        ) : (
+          <>
+            View Quiz Submissions
+            <ArrowRight className="w-5 h-5" />
+          </>
         )}
       </button>
     </motion.div>
@@ -175,7 +132,7 @@ const QuizzSubmission = ({
   const incorrectAnswers = totalQuestions - correctAnswers;
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
+    const timer = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -189,31 +146,36 @@ const QuizzSubmission = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-6"
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center justify-center min-h-screen bg-slate-50 p-6"
         >
           <div className="max-w-lg w-full space-y-8">
-            <motion.h2
-              initial={{ y: -20, opacity: 0 }}
+            <motion.div
+              initial={{ y: -16, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              className="text-4xl font-bold text-center text-gray-800 mb-8"
+              transition={{ duration: 0.5 }}
+              className="text-center"
             >
-              Quiz Results
-            </motion.h2>
+              <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                Quiz Results
+              </h2>
+            </motion.div>
             <ScoreDisplay score={score} />
             <div className="space-y-5 mt-8">
               <ResultBar
                 label="Correct"
                 value={correctAnswers}
                 total={totalQuestions}
-                color="bg-green-500"
+                color="bg-emerald-500"
               />
               <ResultBar
                 label="Incorrect"
                 value={incorrectAnswers}
                 total={totalQuestions}
-                color="bg-red-500"
+                color="bg-rose-500"
               />
             </div>
             <FeedbackMessage score={score} />
@@ -226,6 +188,3 @@ const QuizzSubmission = ({
 };
 
 export default QuizzSubmission;
-
-
-//this is an old code

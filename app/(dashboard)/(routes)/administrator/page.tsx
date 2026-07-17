@@ -1,9 +1,6 @@
-// app/(dashboard)/(routes)/administrator/page.tsx
-
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { isAdministrator } from "@/lib/administrator";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   UserCheck,
@@ -12,6 +9,7 @@ import {
   Trash,
   Wallet,
   DollarSign,
+  ShieldCheck,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { DeletionRequestList } from "./_components/deletion-request-list";
@@ -20,7 +18,8 @@ import { WithdrawalRequests } from "./_components/withdrawl-requests";
 import { TransactionHistory } from "./_components/transaction-history";
 import { format } from "date-fns";
 import { AdminAnalytics } from "./_components/admin-analytics";
-import ExportButton from "./_components/export-button"; // Import the ExportButton component
+import { AdminStat } from "./_components/admin-stat";
+import ExportButton from "./_components/export-button";
 
 const AdministratorPage = async () => {
   const { userId } = auth();
@@ -29,24 +28,19 @@ const AdministratorPage = async () => {
     redirect("/");
   }
 
-  // Add analytics data fetching
   const analyticsData = {
     revenue: {
       daily: await db.purchase
         .groupBy({
           by: ["createdAt"],
-          _sum: {
-            amount: true,
-          },
+          _sum: { amount: true },
           where: {
             createdAt: {
-              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
             },
             paymentStatus: "completed",
           },
-          orderBy: {
-            createdAt: "asc",
-          },
+          orderBy: { createdAt: "asc" },
         })
         .then((data) =>
           data.map((d) => ({
@@ -57,15 +51,9 @@ const AdministratorPage = async () => {
       monthly: await db.purchase
         .groupBy({
           by: ["createdAt"],
-          _sum: {
-            amount: true,
-          },
-          where: {
-            paymentStatus: "completed",
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
+          _sum: { amount: true },
+          where: { paymentStatus: "completed" },
+          orderBy: { createdAt: "asc" },
         })
         .then((data) =>
           data.map((d) => ({
@@ -85,9 +73,7 @@ const AdministratorPage = async () => {
             },
             paymentStatus: "completed",
           },
-          orderBy: {
-            createdAt: "asc",
-          },
+          orderBy: { createdAt: "asc" },
         })
         .then((data) =>
           data.map((d) => ({
@@ -99,12 +85,8 @@ const AdministratorPage = async () => {
         .groupBy({
           by: ["createdAt"],
           _count: true,
-          where: {
-            paymentStatus: "completed",
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
+          where: { paymentStatus: "completed" },
+          orderBy: { createdAt: "asc" },
         })
         .then((data) =>
           data.map((d) => ({
@@ -117,17 +99,13 @@ const AdministratorPage = async () => {
       .groupBy({
         by: ["categoryId"],
         _count: true,
-        _sum: {
-          price: true,
-        },
-        where: {
-          isPublished: true,
-        },
+        _sum: { price: true },
+        where: { isPublished: true },
       })
       .then(async (data) => {
         const categories = await db.category.findMany();
         return data
-          .filter((d) => d.categoryId) // Filter out null categories
+          .filter((d) => d.categoryId)
           .map((d) => ({
             category:
               categories.find((c) => c.id === d.categoryId)?.name ||
@@ -155,54 +133,27 @@ const AdministratorPage = async () => {
     db.withdrawalRequest.count({ where: { status: "pending" } }),
     db.withdrawalRequest.findMany({
       where: { status: "pending" },
-      include: {
-        publisher: true,
-        bankAccount: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+      include: { publisher: true, bankAccount: true },
+      orderBy: { createdAt: "desc" },
     }),
     db.purchase.aggregate({ _sum: { royaltyAmount: true } }),
-    // Fetch combined transactions
     Promise.all([
-      // Fetch withdrawals
       db.withdrawalRequest.findMany({
         take: 50,
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
         include: {
-          publisher: {
-            select: {
-              name: true,
-            },
-          },
+          publisher: { select: { name: true } },
           bankAccount: {
-            select: {
-              bankName: true,
-              accountNumber: true,
-            },
+            select: { bankName: true, accountNumber: true },
           },
         },
       }),
-      // Fetch purchases
       db.purchase.findMany({
         take: 50,
-        orderBy: {
-          createdAt: "desc",
-        },
+        orderBy: { createdAt: "desc" },
         include: {
-          course: {
-            select: {
-              title: true,
-            },
-          },
-          publisher: {
-            select: {
-              name: true,
-            },
-          },
+          course: { select: { title: true } },
+          publisher: { select: { name: true } },
         },
       }),
     ]).then(([withdrawals, purchases]) => {
@@ -215,7 +166,6 @@ const AdministratorPage = async () => {
         publisher: w.publisher,
         bankAccount: w.bankAccount,
       }));
-
       const formattedPurchases = purchases.map((p) => ({
         id: p.id,
         type: "purchase" as const,
@@ -225,7 +175,6 @@ const AdministratorPage = async () => {
         publisher: p.publisher,
         course: p.course,
       }));
-
       return [...formattedWithdrawals, ...formattedPurchases].sort(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
       );
@@ -233,26 +182,31 @@ const AdministratorPage = async () => {
   ]);
 
   return (
-    <main className="min-h-screen bg-gray-50/30">
-      <div className="container mx-auto p-4 md:p-6 lg:p-8">
-        {/* Header Section */}
-        <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Administrator Dashboard
-          </h1>
-          <div className="flex flex-wrap items-center gap-2">
-            {pendingWithdrawals > 0 && (
-              <Badge className="px-3 py-1.5 bg-green-50 text-green-700 border border-green-200">
-                {pendingWithdrawals} Pending Withdrawals
-              </Badge>
-            )}
-            {pendingDeletionRequests > 0 && (
-              <Badge className="px-3 py-1.5 bg-red-50 text-red-700 border border-red-200">
-                {pendingDeletionRequests} Pending Deletions
-              </Badge>
-            )}
+    <div className="max-w-[1400px] mx-auto px-6 py-10 space-y-10">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-slate-400" />
+            <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">
+              Admin Dashboard
+            </h1>
           </div>
-          {/* Export Button */}
+          <p className="text-sm text-slate-500">
+            Platform overview, payouts and moderation queue.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {pendingWithdrawals > 0 && (
+            <Badge className="px-3 py-1 bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+              {pendingWithdrawals} Pending Payouts
+            </Badge>
+          )}
+          {pendingDeletionRequests > 0 && (
+            <Badge className="px-3 py-1 bg-rose-50 text-rose-700 border border-rose-200 font-medium">
+              {pendingDeletionRequests} Pending Deletions
+            </Badge>
+          )}
           <ExportButton
             data={{
               chartData: analyticsData.revenue.monthly,
@@ -264,176 +218,100 @@ const AdministratorPage = async () => {
               studentDemographics: analyticsData.categoryDistribution,
             }}
             fileName="Analytics_Report"
-            logoPath="/main-logo.png" // Replace with the actual logo path
+            logoPath="/main-logo.png"
           />
-        </header>
-
-        {/* Stats Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
-          <StatCard
-            icon={UserCheck}
-            title="Pending Applications"
-            value={pendingApplications}
-            color="text-blue-600"
-            bgColor="bg-blue-50"
-            borderColor="border-blue-100"
-          />
-          <StatCard
-            icon={Users}
-            title="Total Educators"
-            value={totalEducators}
-            color="text-indigo-600"
-            bgColor="bg-indigo-50"
-            borderColor="border-indigo-100"
-          />
-          <StatCard
-            icon={BookOpen}
-            title="Total Courses"
-            value={totalCourses}
-            color="text-purple-600"
-            bgColor="bg-purple-50"
-            borderColor="border-purple-100"
-          />
-          <StatCard
-            icon={Trash}
-            title="Pending Deletions"
-            value={pendingDeletionRequests}
-            color="text-red-600"
-            bgColor="bg-red-50"
-            borderColor="border-red-100"
-          />
-          <StatCard
-            icon={Wallet}
-            title="Pending Withdrawals"
-            value={pendingWithdrawals}
-            color="text-green-600"
-            bgColor="bg-green-50"
-            borderColor="border-green-100"
-          />
-          <StatCard
-            icon={DollarSign}
-            title="Total Royalties"
-            value={totalRoyalties._sum.royaltyAmount || 0}
-            color="text-yellow-600"
-            bgColor="bg-yellow-50"
-            borderColor="border-yellow-100"
-          />
-        </section>
-
-        {/* Analytics Section - New */}
-        <section className="mb-8">
-          <AdminAnalytics data={analyticsData} />
-        </section>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-          {/* Main Content Column */}
-          <section className="xl:col-span-8 space-y-6">
-            {/* Withdrawal Requests */}
-            <Card className="border rounded-lg shadow-sm bg-white">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-50">
-                      <Wallet className="h-5 w-5 text-green-500" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Withdrawal Requests
-                    </h2>
-                  </div>
-                  {pendingWithdrawals > 0 && (
-                    <Badge className="px-2.5 py-1 bg-green-50 text-green-700">
-                      {pendingWithdrawals} pending
-                    </Badge>
-                  )}
-                </div>
-                <div className="overflow-hidden rounded-lg border border-gray-100">
-                  <WithdrawalRequests initialRequests={withdrawalRequests} />
-                </div>
-              </div>
-            </Card>
-
-            {/* Transaction History */}
-            <Card className="border rounded-lg shadow-sm bg-white overflow-hidden">
-              <TransactionHistory initialTransactions={transactions} />
-            </Card>
-          </section>
-
-          {/* Sidebar Column */}
-          <aside className="xl:col-span-4 space-y-6">
-            {/* Deletion Requests */}
-            <Card className="border rounded-lg shadow-sm bg-white">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-red-50">
-                      <Trash className="h-5 w-5 text-red-500" />
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Deletion Requests
-                    </h2>
-                  </div>
-                  {pendingDeletionRequests > 0 && (
-                    <Badge className="px-2.5 py-1 bg-red-50 text-red-700">
-                      {pendingDeletionRequests} pending
-                    </Badge>
-                  )}
-                </div>
-                <div className="overflow-hidden rounded-lg border border-gray-100">
-                  <DeletionRequestList />
-                </div>
-              </div>
-            </Card>
-
-            {/* Recent Activities */}
-            <Card className="border rounded-lg shadow-sm bg-white overflow-hidden">
-              <RecentActivities />
-            </Card>
-          </aside>
         </div>
       </div>
-    </main>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <AdminStat
+          icon={UserCheck}
+          title="Pending Apps"
+          value={pendingApplications}
+        />
+        <AdminStat icon={Users} title="Educators" value={totalEducators} />
+        <AdminStat icon={BookOpen} title="Courses" value={totalCourses} />
+        <AdminStat
+          icon={Trash}
+          title="Deletions"
+          value={pendingDeletionRequests}
+        />
+        <AdminStat
+          icon={Wallet}
+          title="Payouts"
+          value={pendingWithdrawals}
+        />
+        <AdminStat
+          icon={DollarSign}
+          title="Royalties"
+          value={totalRoyalties._sum.royaltyAmount || 0}
+          shouldFormat
+          emphasis
+        />
+      </div>
+
+      {/* Analytics */}
+      <section>
+        <AdminAnalytics data={analyticsData} />
+      </section>
+
+      {/* Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main column */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Withdrawal Requests */}
+          <section className="bg-white rounded-2xl border border-slate-200/70">
+            <div className="flex items-center gap-2.5 p-5 border-b border-slate-100">
+              <Wallet className="h-4 w-4 text-slate-400" />
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+                Withdrawal Requests
+              </h2>
+              {pendingWithdrawals > 0 && (
+                <Badge className="ml-auto px-2 py-0.5 bg-amber-50 text-amber-700 text-xs">
+                  {pendingWithdrawals} pending
+                </Badge>
+              )}
+            </div>
+            <div className="p-5">
+              <WithdrawalRequests initialRequests={withdrawalRequests} />
+            </div>
+          </section>
+
+          {/* Transaction History */}
+          <section className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden">
+            <TransactionHistory initialTransactions={transactions} />
+          </section>
+        </div>
+
+        {/* Sidebar column */}
+        <aside className="lg:col-span-4 space-y-6">
+          {/* Deletion Requests */}
+          <section className="bg-white rounded-2xl border border-slate-200/70">
+            <div className="flex items-center gap-2.5 p-5 border-b border-slate-100">
+              <Trash className="h-4 w-4 text-slate-400" />
+              <h2 className="text-sm font-semibold text-slate-900 tracking-tight">
+                Deletion Requests
+              </h2>
+              {pendingDeletionRequests > 0 && (
+                <Badge className="ml-auto px-2 py-0.5 bg-rose-50 text-rose-700 text-xs">
+                  {pendingDeletionRequests} pending
+                </Badge>
+              )}
+            </div>
+            <div className="p-5">
+              <DeletionRequestList />
+            </div>
+          </section>
+
+          {/* Recent Activities */}
+          <section className="bg-white rounded-2xl border border-slate-200/70 overflow-hidden">
+            <RecentActivities />
+          </section>
+        </aside>
+      </div>
+    </div>
   );
 };
 
-interface StatCardProps {
-  icon: any;
-  title: string;
-  value: number;
-  color?: string;
-  bgColor?: string;
-  borderColor?: string;
-}
-
-const StatCard = ({
-  icon: Icon,
-  title,
-  value,
-  color,
-  bgColor,
-  borderColor,
-}: StatCardProps) => (
-  <Card
-    className={`group transition-all duration-300 hover:shadow-lg border ${borderColor} bg-white overflow-hidden`}
-  >
-    <div className="p-6">
-      <div className="flex items-start gap-4">
-        <div
-          className={`p-2 rounded-lg ${bgColor} group-hover:scale-110 transition-transform`}
-        >
-          <Icon className={`h-6 w-6 ${color}`} />
-        </div>
-        <div className="space-y-2">
-          <h3 className="text-sm font-medium text-gray-600">{title}</h3>
-          <p className="text-2xl font-bold text-gray-900">
-            {value.toLocaleString()}
-          </p>
-        </div>
-      </div>
-    </div>
-  </Card>
-);
-
 export default AdministratorPage;
-
-//OLD CODE

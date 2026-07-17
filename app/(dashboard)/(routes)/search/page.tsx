@@ -1,42 +1,27 @@
-import React from "react";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { getCourses } from "@/actions/get-courses";
-import { Categories } from "./_components/categories";
-import SearchInput from "@/components/search-input";
-import CoursesList from "@/components/courses-list";
+import { getAllCourses } from "@/actions/get-courses";
+import { InstantSearch } from "./_components/instant-search";
+import { Suspense } from "react";
 
-interface SearchPageProps {
-  searchParams: {
-    title: string;
-    categoryId: string;
-  };
-}
-
-const SearchPage = async ({ searchParams }: SearchPageProps) => {
+const SearchPage = async () => {
   const { userId } = auth();
 
-  const categories = await db.category.findMany({
-    orderBy: {
-      name: "asc",
-    },
-  });
-
-  const courses = await getCourses({
-    userId: userId || undefined,  //! Pass userId to getCourses; undefined if not logged in
-    ...searchParams,
-  });
+  const [courses, categories] = await Promise.all([
+    getAllCourses(userId || undefined),
+    db.category.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   return (
-    <>
-      <div className="px-6 pt-6 lg:hidden md:mb-0 block">
-        <SearchInput />
-      </div>
-      <div className="p-6 space-y-4">
-        <Categories items={categories} />
-        <CoursesList items={courses} />
-      </div>
-    </>
+    <div className="px-6 py-8 max-w-[1400px] mx-auto">
+      <Suspense fallback={<div className="text-sm text-slate-400">Loading...</div>}>
+        <InstantSearch
+          courses={courses}
+          categories={categories}
+          userId={userId || undefined}
+        />
+      </Suspense>
+    </div>
   );
 };
 

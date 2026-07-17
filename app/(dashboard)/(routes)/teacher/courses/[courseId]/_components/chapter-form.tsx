@@ -83,15 +83,17 @@ const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
   }
 
   return (
-    <div className="relative mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="relative mt-6 rounded-xl border border-slate-200/70 bg-white p-4">
       {isUpdating && (
-        <div className="absolute h-full w-full bg-slate-500/20 top-0 right-0 rounded-m flex items-center justify-center">
+        <div className="absolute h-full w-full bg-slate-500/20 top-0 right-0 rounded-xl flex items-center justify-center">
           <Loader2 className="animate-spin h-6 w-6 text-sky-700" />
         </div>
       )}
       <div className="font-medium flex items-center justify-between">
-        Course chapters
-        <Button onClick={toggleCreating} variant={"ghost"}>
+        <span className="text-sm font-semibold text-slate-700">
+          Course chapters
+        </span>
+        <Button onClick={toggleCreating} variant={"ghost"} size="sm">
           {isCreating ? (
             <>Cancel</>
           ) : (
@@ -147,7 +149,7 @@ const ChapterForm = ({ initialData, courseId }: ChapterFormProps) => {
       )}
       {!isCreating && (
         <p className="text-xs text-muted-foreground mt-4">
-          Drag and drop to reorder the chapters
+          Drag the handle to reorder. The first chapter is free for preview.
         </p>
       )}
     </div>

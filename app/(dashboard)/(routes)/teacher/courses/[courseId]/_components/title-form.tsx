@@ -58,7 +58,7 @@ const TitleForm = ({ initialData, courseId }: TitleFormProps) => {
   };
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-5">
       <div className="font-medium flex items-center justify-between">
         Course title
         <Button onClick={toggleEdit} variant={"ghost"}>

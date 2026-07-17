@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { IconBadge } from "@/components/icon-badge";
 import {
   CircleDollarSign,
@@ -25,14 +26,14 @@ interface CourseIdPageClientProps {
   course: any;
   categories: any[];
   courseId: string;
-  isPendingDeletion: boolean; // Add this new prop
+  isPendingDeletion: boolean;
 }
 
 export const CourseIdPageClient = ({
   course,
   categories,
   courseId,
-  isPendingDeletion, // Add this new prop
+  isPendingDeletion,
 }: CourseIdPageClientProps) => {
   const requiredFields = [
     course.title,
@@ -45,9 +46,7 @@ export const CourseIdPageClient = ({
 
   const totalFields = requiredFields.length;
   const completedFields = requiredFields.filter(Boolean).length;
-
-  const completionText = `(${completedFields} / ${totalFields})`;
-
+  const completionPct = Math.round((completedFields / totalFields) * 100);
   const isComplete = requiredFields.every(Boolean);
 
   return (
@@ -55,27 +54,40 @@ export const CourseIdPageClient = ({
       {!course.isPublished && (
         <Banner label="This course is not published. It will not be visible to the students." />
       )}
-      <div className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-y-2">
-            <h1 className="text-2xl font-medium">Course setup</h1>
-            <span className="text-sm text-muted-foreground">
-              Complete all fields {completionText}
+      <div className="p-6 sm:p-8 max-w-[1000px] mx-auto">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex flex-col gap-y-1.5">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              Course setup
+            </h1>
+            <span className="text-sm text-slate-500">
+              Complete all fields ({completedFields} / {totalFields})
             </span>
+            <div className="mt-2 w-full sm:w-64 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-slate-900 rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${completionPct}%` }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+              />
+            </div>
           </div>
           <Actions
             disabled={!isComplete}
             courseId={courseId}
             isPublished={course.isPublished}
-            initialPendingStatus={isPendingDeletion} // Pass the initial pending status
+            initialPendingStatus={isPendingDeletion}
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-          <div>
-            <div className="flex items-center gap-x-2">
-              <IconBadge icon={LayoutDashboard} />
-              <h2 className="text-xl">Customize your course</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+          <section className="rounded-2xl border border-slate-200/70 bg-white p-5 sm:p-6 space-y-5">
+            <div className="flex items-center gap-x-2.5 pb-1">
+              <IconBadge icon={LayoutDashboard} variant="default" size="lg" />
+              <h2 className="text-base font-semibold text-slate-900">
+                Customize your course
+              </h2>
             </div>
             <TitleForm initialData={course} courseId={course.id} />
             <DescriptionForm initialData={course} courseId={course.id} />
@@ -88,30 +100,33 @@ export const CourseIdPageClient = ({
                 value: category.id,
               }))}
             />
-          </div>
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={ListChecks} />
-                <h2 className="text-xl">Course chapter</h2>
-              </div>
-              <ChapterForm initialData={course} courseId={course.id} />
+          </section>
+
+          <section className="rounded-2xl border border-slate-200/70 bg-white p-5 sm:p-6 space-y-6">
+            <div className="flex items-center gap-x-2.5 pb-1">
+              <IconBadge icon={ListChecks} variant="slate" size="lg" />
+              <h2 className="text-base font-semibold text-slate-900">
+                Course chapter
+              </h2>
             </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={CircleDollarSign} />
-                <h2 className="text-xl">Sell your course</h2>
-              </div>
-              <PriceForm initialData={course} courseId={course.id} />
+            <ChapterForm initialData={course} courseId={course.id} />
+
+            <div className="flex items-center gap-x-2.5 pt-2">
+              <IconBadge icon={CircleDollarSign} variant="success" size="lg" />
+              <h2 className="text-base font-semibold text-slate-900">
+                Sell your course
+              </h2>
             </div>
-            <div>
-              <div className="flex items-center gap-x-2">
-                <IconBadge icon={File} />
-                <h2 className="text-xl">Resources & Attachements</h2>
-              </div>
-              <AttachementForm initialData={course} courseId={course.id} />
+            <PriceForm initialData={course} courseId={course.id} />
+
+            <div className="flex items-center gap-x-2.5 pt-2">
+              <IconBadge icon={File} variant="warning" size="lg" />
+              <h2 className="text-base font-semibold text-slate-900">
+                Resources &amp; Attachments
+              </h2>
             </div>
-          </div>
+            <AttachementForm initialData={course} courseId={course.id} />
+          </section>
         </div>
         <NotificationListener courseId={courseId} />
       </div>

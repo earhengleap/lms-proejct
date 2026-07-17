@@ -1,15 +1,17 @@
-// app/(dashboard)/_components/sidebar-items.tsx
 "use client";
 
 import { LucideIcon } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 interface SidebarItemsProps {
   icon: LucideIcon;
   label: string;
   href: string;
   isActive?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
+  spinOnActive?: boolean;
 }
 
 const SidebarItems = ({
@@ -18,38 +20,38 @@ const SidebarItems = ({
   href,
   isActive,
   onClick,
+  spinOnActive,
 }: SidebarItemsProps) => {
-  const pathname = usePathname();
-  const isAdminPage = pathname?.startsWith("/administrator");
-
   return (
-    <button
-      onClick={onClick}
-      type="button"
-      className={`relative flex rounded-md items-center gap-x-3 text-sm font-medium pl-6 py-3 transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-md ${
-        isActive
-          ? isAdminPage
-            ? "text-sky-700 font-bold bg-sky-100 hover:bg-sky-200"
-            : "text-sky-700 font-bold bg-sky-200/30 hover:bg-sky-200/50"
-          : isAdminPage
-            ? "text-gray-700 hover:text-sky-700 hover:bg-sky-50"
-            : "text-slate-500 hover:text-slate-600 hover:bg-slate-300/20"
-      }`}
-    >
-      <Icon
-        size={22}
-        className={`transition-transform transform duration-500 ${
-          isActive ? "spin-once scale-110" : "hover:scale-105"
-        }`}
-      />
-      <span
-        className={`transition-all duration-300 ${
-          isActive ? "font-bold transform scale-105" : ""
-        }`}
+    <Link href={href} onClick={onClick as any} prefetch className="block">
+      <motion.div
+        whileTap={{ scale: 0.98 }}
+        className={cn(
+          "relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors duration-200 group cursor-pointer",
+          isActive
+            ? "text-sky-700"
+            : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/80"
+        )}
       >
-        {label}
-      </span>
-    </button>
+        {isActive && (
+          <motion.span
+            layoutId="sidebar-active-pill"
+            className="absolute inset-0 rounded-xl bg-sky-50 ring-1 ring-sky-100"
+            transition={{ type: "spring", stiffness: 400, damping: 32 }}
+          />
+        )}
+        <Icon
+          size={18}
+          className={cn(
+            "relative transition-all duration-300 shrink-0 z-10",
+            isActive && spinOnActive && "spin-once scale-110",
+            isActive && !spinOnActive && "scale-110",
+            !isActive && "group-hover:scale-105"
+          )}
+        />
+        <span className="relative truncate z-10">{label}</span>
+      </motion.div>
+    </Link>
   );
 };
 

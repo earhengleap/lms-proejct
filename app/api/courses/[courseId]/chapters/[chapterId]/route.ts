@@ -1,17 +1,9 @@
 // app/api/courses/[courseId]/chapters/[chapterId]/route.ts
 
-import Mux from "@mux/mux-node";
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { isAdministrator } from "@/lib/administrator"; // Ensure this function is implemented
-
-const muxConfig = {
-    tokenID: process.env.MUX_TOKEN_ID!,
-    tokenSecret: process.env.MUX_TOKEN_SECRET!,
-};
-
-const mux = new Mux(muxConfig);
+import { isAdministrator } from "@/lib/administrator";
 
 export async function DELETE(
   req: Request,
@@ -50,13 +42,12 @@ export async function DELETE(
       });
 
       if (existingMuxData) {
-        await mux.video.assets.delete(existingMuxData.assetId);
         await db.muxData.delete({
           where: {
             id: existingMuxData.id,
           },
         });
-        console.log("deleted", existingMuxData.assetId);
+        console.log("deleted mux data", existingMuxData.id);
       }
     }
 
@@ -152,59 +143,13 @@ export async function PATCH(
       },
     });
 
+    // If a new video URL is provided, drop any stale Mux data (no longer used).
     if (values.videoUrl) {
-      const existingMuxData = await db.muxData.findUnique({
+      await db.muxData.deleteMany({
         where: {
           chapterId: params.chapterId,
         },
       });
-      console.log("existing", existingMuxData);
-
-      if (existingMuxData) {
-        try {
-          await mux.video.assets.delete(existingMuxData.assetId);
-          console.log("deleted", existingMuxData.assetId);
-        } catch (error) {
-          if (error instanceof Mux.APIError) {
-            console.error("Error deleting Mux asset:", error);
-            // If the asset doesn't exist, we can proceed
-            if (error.status !== 404) {
-              throw error; // Re-throw if it's not a 404 error
-            }
-          } else {
-            console.error("Unknown error deleting Mux asset:", error);
-            throw error;
-          }
-        }
-
-        // Always delete the MuxData from our database
-        await db.muxData.delete({
-          where: {
-            chapterId: params.chapterId,
-          },
-        });
-      }
-
-      try {
-        const asset = await mux.video.assets.create({
-          input: values.videoUrl,
-          playback_policy: ["public"],
-          test: false,
-        });
-        console.log("asset", asset);
-
-        // Save the Mux asset data in the database
-        await db.muxData.create({
-          data: {
-            chapterId: params.chapterId,
-            assetId: asset.id,
-            playbackId: asset.playback_ids?.[0]?.id,
-          },
-        });
-      } catch (muxError) {
-        console.error("Mux error:", muxError);
-        return new NextResponse("Mux API error", { status: 500 });
-      }
     }
 
     return NextResponse.json(chapter);
@@ -213,5 +158,3 @@ export async function PATCH(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
-
-//OLD CODE

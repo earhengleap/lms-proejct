@@ -1,46 +1,36 @@
-// app/(dashboard)/dashboard/page.tsx
-
-import { getDashboardCourses } from "@/actions/get-dashboard-courses";
-import CoursesList from "@/components/courses-list";
 import { auth } from "@clerk/nextjs/server";
-import { CircleCheck, Clock } from "lucide-react";
-import { InfoCard } from "./_components/info-card";
+import { getDashboardCourses } from "@/actions/get-dashboard-courses";
+import DashboardClient from "./_components/dashboard-client";
 
 const Dashboard = async () => {
   const { userId } = auth();
 
   if (!userId) {
-    return null; // The RootRedirect component will handle the sign-in dialog
+    return null;
   }
 
   const { completedCourses, coursesInProgress } =
     await getDashboardCourses(userId);
 
+  const allCourses = [...coursesInProgress, ...completedCourses].map(
+    (course) => ({
+      ...course,
+      publisherName: course.publisher?.name ?? "Unknown",
+    })
+  );
+
   return (
-    <>
-      <div className="p-6 space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <InfoCard
-            icon={Clock}
-            label="In Progress"
-            numberOfItems={coursesInProgress.length}
-          />
-          <InfoCard
-            icon={CircleCheck}
-            label="Completed"
-            numberOfItems={completedCourses.length}
-            variant="success"
-          />
-        </div>
-        <CoursesList
-          items={[...coursesInProgress, ...completedCourses].map((course) => ({
-            ...course,
-            publisherName: course.publisher?.name ?? "Unknown Publisher",
-          }))}
-          userId={userId}
-        />
-      </div>
-    </>
+    <DashboardClient
+      userId={userId}
+      coursesInProgress={coursesInProgress.map((c) => ({
+        ...c,
+        publisherName: c.publisher?.name ?? "Unknown",
+      }))}
+      completedCourses={completedCourses.map((c) => ({
+        ...c,
+        publisherName: c.publisher?.name ?? "Unknown",
+      }))}
+    />
   );
 };
 

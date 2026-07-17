@@ -6,20 +6,21 @@ import {
   List,
   BarChart,
   CheckSquare,
-  Settings,
   Users,
   LayoutDashboard,
   GraduationCap,
+  CreditCard,
   MessageSquare,
   BarChart2,
-  CreditCard,
+  Settings,
 } from "lucide-react";
 import SidebarItems from "./sidebar-items";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LoginModal from "@/components/login-modal";
 import { isAdministrator } from "@/lib/administrator";
+import { motion } from "framer-motion";
 
 const studentRoutes = [
   {
@@ -31,6 +32,7 @@ const studentRoutes = [
     icon: Compass,
     label: "Browse",
     href: "/search",
+    spinOnActive: true,
   },
   {
     icon: CheckSquare,
@@ -52,7 +54,7 @@ const teacherRoutes = [
   },
   {
     icon: CreditCard,
-    label: "Wallet", // New route for instructors to view their revenue/payments
+    label: "Wallet",
     href: "/teacher/wallet",
   },
 ];
@@ -95,20 +97,41 @@ const adminRoutes = [
   },
 ];
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 },
+};
+
+const isRouteActive = (pathname: string | null, href: string): boolean => {
+  if (!pathname) return false;
+  if (pathname === href) return true;
+  // Index/base routes (e.g. "/", "/administrator", "/teacher/analytics")
+  // must NOT match their subpaths.
+  if (href === "/") return pathname === "/";
+  if (href === "/administrator") return pathname === "/administrator";
+  if (href === "/teacher/analytics")
+    return pathname === "/teacher/analytics";
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
 export const SidebarRoutes = () => {
   const pathname = usePathname();
-  const router = useRouter();
-  const { userId, isLoaded } = useAuth();
+  const { userId } = useAuth();
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const isTeacherPage = pathname?.startsWith("/teacher");
   const isAdminPage = pathname?.startsWith("/administrator");
-
-  useEffect(() => {
-    if (isLoaded && !userId && pathname === "/") {
-      router.push("/search");
-    }
-  }, [userId, pathname, router, isLoaded]);
 
   let routes;
   if (isAdministrator(userId)) {
@@ -123,37 +146,42 @@ export const SidebarRoutes = () => {
     routes = isTeacherPage ? teacherRoutes : studentRoutes;
   }
 
-  const filteredRoutes = routes.filter((route) => {
-    if (route.href === "/" && !userId) {
-      return false;
-    }
-    return true;
-  });
+  const filteredRoutes = routes;
 
   const handleRouteClick = (href: string) => {
-    if (!userId && (href === "/quizzes" || href === "/")) {
+    if (!userId && href === "/quizzes") {
       setIsLoginModalOpen(true);
-    } else {
-      router.push(href);
     }
   };
 
   return (
     <>
-      <div className="flex flex-col w-full space-y-2 px-4 py-2">
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="flex flex-col gap-1"
+      >
         {filteredRoutes.map((route) => (
-          <SidebarItems
-            key={route.href}
-            icon={route.icon}
-            label={route.label}
-            href={route.href}
-            isActive={
-              pathname === route.href || pathname.startsWith(`${route.href}/`)
-            }
-            onClick={() => handleRouteClick(route.href)}
-          />
+          <motion.div key={route.href} variants={item}>
+            <SidebarItems
+              icon={route.icon}
+              label={route.label}
+              href={route.href}
+              isActive={isRouteActive(pathname, route.href)}
+              onClick={
+                !userId && route.href === "/quizzes"
+                  ? (e?: React.MouseEvent) => {
+                      e?.preventDefault();
+                      setIsLoginModalOpen(true);
+                    }
+                  : undefined
+              }
+              spinOnActive={(route as any).spinOnActive}
+            />
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}

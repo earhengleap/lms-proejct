@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { File, Loader2, PlusCircle, X } from "lucide-react";
+import { File, Loader2, PlusCircle, X, ExternalLink } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Attachment, Course } from "@prisma/client";
 import { FileUpload } from "@/components/file-upload";
@@ -55,7 +55,7 @@ const AttachementForm = ({ initialData, courseId }: AttachementFormProps) => {
   }
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
+    <div className="mt-6 rounded-2xl border border-slate-200/70 bg-white p-5">
       <div className="font-medium flex items-center justify-between">
         Course attachments
         <Button onClick={toggleEdit} variant={"ghost"}>
@@ -80,19 +80,30 @@ const AttachementForm = ({ initialData, courseId }: AttachementFormProps) => {
               {initialData.attachments.map((attachment) => (
                 <div
                   key={attachment.id}
-                  className="flex items-center p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md"
+                  className="flex items-center gap-2 p-3 w-full bg-sky-100 border-sky-200 border text-sky-700 rounded-md"
                 >
-                  <File className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <p className="text-xs line-clamp-1">{attachment.name}</p>
+                  <File className="h-4 w-4 flex-shrink-0" />
+                  <p className="text-xs line-clamp-1 flex-1">{attachment.name}</p>
               {deletingId === attachment.id && (
                 <div>
                   <Loader2 className="h-4 w-4 animate-spin" />
                 </div>
               )}
               {deletingId !== attachment.id && (
-                <button className="ml-auto hover:opacity-75 transition" onClick={() => onDelete(attachment.id)}>
-                   <X className="h-4 w-4"/>
-                </button>
+                <>
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:opacity-75 transition"
+                    title="View attachment"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                  <button className="hover:opacity-75 transition" onClick={() => onDelete(attachment.id)}>
+                    <X className="h-4 w-4"/>
+                  </button>
+                </>
               )}
                 </div>
               ))}
@@ -110,7 +121,7 @@ const AttachementForm = ({ initialData, courseId }: AttachementFormProps) => {
               }
             }}
           />
-          <div className="text-xs text-muted-forground mt-4">
+          <div className="text-xs text-muted-foreground mt-4">
             Add anything your students might need to complete the course.
           </div>
         </div>
